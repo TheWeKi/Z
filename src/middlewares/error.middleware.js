@@ -1,13 +1,4 @@
-import {NextFunction, Request, Response} from 'express';
-import {HttpException} from '../handlers/HttpException';
-import {logger} from '../utilities/logger/winston_logger';
-
-const errorMiddleware = (
-  error: HttpException,
-  req: Request,
-  res: Response,
-  next: NextFunction
-) => {
+const errorMiddleware = (error, req, res, next) => {
   try {
     const response = {
       status: false,
@@ -17,7 +8,7 @@ const errorMiddleware = (
       result: error.result || {},
     };
 
-    logger.error(
+    console.error(
       `[${req.method}] ${req.path} >> StatusCode:: ${response.statusCode}, Message:: ${response.message}`
     );
     res.status(response.statusCode).json(response);

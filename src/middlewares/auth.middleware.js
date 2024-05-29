@@ -1,35 +1,22 @@
 import jwt from 'jsonwebtoken';
-import {HttpException} from '../handlers/HttpException';
-import {UserType} from '../enum';
-import {readAdminById} from '../modules/user/model';
+import {HttpException} from '../handlers/HttpException.js';
+import {UserType} from '../enum.js';
+import {readAdminById} from '../modules/user/model.js';
 
+import {JWT_ACCESS_PRIVATE_KEY} from '../config/index.js';
 
-
-declare global {
-  // eslint-disable-next-line @typescript-eslint/no-namespace
-  namespace Express {
-    export interface Request {
-      user: IJwtUser;
-      baseUrl: string;
-    }
-  }
-}
-
-async function authenticate_jwt(
-  req: Request,
-  res: Response
-): Promise<IJwtUser | undefined> {
+async function authenticate_jwt(req, res){
   const authHeader = req.headers['authorization'];
   const token = authHeader && authHeader.split(' ')[1];
-  let result: IJwtUser | undefined;
+  let result;
   if (!token) {
     HttpException(res, 401, 'Authorization Error');
   } else {
-    const promis = new Promise(resolve => {
-      jwt.verify(token, process.env.JWT_ACCESS_PRIVATE_KEY!, (err, user) => {
+    const promise = new Promise(resolve => {
+      jwt.verify(token, JWT_ACCESS_PRIVATE_KEY, (err, user) => {
         if (err) {
           if (err.name === 'JsonWebTokenError') {
-            logger.info('Got Error While Verification of token', err);
+            console.info('Got Error While Verification of token', err);
           }
           HttpException(res, 401, 'Authorization Error');
         } else {
@@ -41,16 +28,12 @@ async function authenticate_jwt(
         }
       });
     });
-    result = (await promis) as IJwtUser;
+    result = (await promise);
   }
   return result;
 }
 
-async function authenticate_user_type(
-  req: Request,
-  res: Response,
-  user_type: UserType
-): Promise<Request | undefined> {
+async function authenticate_user_type(req, res, user_type){
   const user = await authenticate_jwt(req, res);
   if (user) {
     if (user.user_type !== user_type) {
@@ -63,11 +46,7 @@ async function authenticate_user_type(
   return undefined;
 }
 
-export async function authenticate_admin(
-  req: Request,
-  res: Response,
-  next: NextFunction
-) {
+export async function authenticate_admin(req, res, next) {
   const rq = await authenticate_user_type(req, res, UserType.ADMIN);
   if (rq) {
     req = rq;
@@ -79,7 +58,7 @@ export async function authenticate_admin(
       }
       req.user.data = admin;
 
-      logger.info('ADMIN_REQUEST', {
+      console.info('ADMIN_REQUEST', {
         admin: req.user,
         api_url: req.originalUrl,
         method: req.method,
@@ -94,11 +73,7 @@ export async function authenticate_admin(
   }
 }
 
-export async function authenticate_customer(
-  req: Request,
-  res: Response,
-  next: NextFunction
-) {
+export async function authenticate_customer(req, res, next) {
   const rq = await authenticate_user_type(req, res, UserType.CUSTOMER);
   if (rq) {
     req = rq;
