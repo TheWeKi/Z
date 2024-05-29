@@ -1,0 +1,21 @@
+{
+  "name": "backend",
+  "version": "0.0.0",
+  "description": "bizdiving dashboard",
+  "main": "index.js",
+  "type": "module",
+  "scripts": {
+    "start": "nodemon src/index.js"
+  },
+  "author": "",
+  "license": "Apache-2.0",
+  "devDependencies": {
+    "dotenv": "^16.4.5",
+    "nodemon": "^3.1.1"
+  },
+  "dependencies": {
+    "cors": "^2.8.5",
+    "express": "^4.19.2",
+    "mongoose": "^8.4.0"
+  }
+}
