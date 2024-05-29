@@ -7,7 +7,7 @@ import {
 const customer_routes = express.Router();
 const admin_routes = express.Router();
 
-// admin_routes.post('/', controllers.createAdmin);
+admin_routes.post('/', controllers.createAdmin);
 admin_routes.patch('/', authenticate_admin, controllers.updateAdmin);
 admin_routes.get('/', authenticate_admin, controllers.getAdmin);
 admin_routes.post('/auth/login', controllers.loginAdmin);

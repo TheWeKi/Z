@@ -2,7 +2,7 @@
 
 export default (res, err, message = 'Response Error') => {
   const error = err;
-  logger.error(message, error);
+  console.error(message, error);
 
   const sendData= {
     status: false,
