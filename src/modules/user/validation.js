@@ -43,6 +43,12 @@ export const update_customer = Joi.object({
   company_name: Joi.string().min(1).max(70).trim(),
   address: Joi.string().min(1).max(70).trim(),
   designation: Joi.string().min(1).max(70).trim(),
+  // hsn_codes: Joi.array().items(Joi.string().min(1).max(70).trim()).min(1),
+  // hsn_codes_valid_upto: Joi.number().positive(),
+});
+
+export const update_customer_as_admin = Joi.object({
+  id: Joi.string().required(),
   hsn_codes: Joi.array().items(Joi.string().min(1).max(70).trim()).min(1),
   hsn_codes_valid_upto: Joi.number().positive(),
 });

@@ -18,13 +18,18 @@ admin_routes.post(
 );
 admin_routes.post('/createCustomer', controllers.createCustomer);
 admin_routes.patch(
-  '/updateCustomer',
+  '/updateCustomerAsAdmin',
   authenticate_admin,
   controllers.updateCustomerAsAdmin
 );
 
 customer_routes.get('/', authenticate_customer, controllers.getCustomer);
 customer_routes.post('/auth/login', controllers.loginCustomer);
+customer_routes.patch(
+  '/updateCustomer',
+  authenticate_customer,
+  controllers.updateCustomer
+);
 customer_routes.post(
   '/auth/refresh',
   authenticate_customer,

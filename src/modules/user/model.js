@@ -51,6 +51,7 @@ export async function updateCustomer(customer) {
   return result;
 }
 
+
 export async function readCustomerById(
   customer_id
 ) {

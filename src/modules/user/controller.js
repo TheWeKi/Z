@@ -8,6 +8,7 @@ import {
   login_customer,
   update_admin,
   update_customer,
+  update_customer_as_admin,
 } from './validation.js';
 import {encryptPassword} from '../../utilities/crypto.js';
 import * as models from './model.js';
@@ -17,6 +18,7 @@ import signToken from '../../utilities/jwt/sign_token.js';
 import refreshToken from '../../utilities/jwt/refresh_token.js';
 import moment from 'moment';
 
+//ok tested
 export async function createAdmin(req, res) {
   try {
     const validation = create_admin.validate(req.body);
@@ -30,6 +32,7 @@ export async function createAdmin(req, res) {
     return InternalServerException(res, error);
   }
 }
+//ok tested
 
 export async function updateAdmin(req, res) {
   try {
@@ -51,17 +54,18 @@ export async function updateAdmin(req, res) {
     return InternalServerException(res, error);
   }
 }
-
+//ok tested
 export async function getAdmin(req, res) {
   try {
     const admin = await models.readAdminById(req.user.id);
-    delete admin.password;
+    admin.password = undefined;
     return HttpResponse(res, 200, 'Admin Fetched', {admin: admin});
   } catch (error) {
     return InternalServerException(res, error);
   }
 }
 
+//ok tested
 export async function loginAdmin(req, res) {
   try {
     const validation = login_admin.validate(req.body);
@@ -80,7 +84,7 @@ export async function loginAdmin(req, res) {
     if (!password_match) {
       return HttpException(res, 400, 'Email or password is wrong', {});
     }
-    delete admin.password;
+    admin.password = undefined;
     const token = signToken(UserType.ADMIN, {
       id: admin.id,
       user_type: UserType.ADMIN,
@@ -100,27 +104,24 @@ export async function loginAdmin(req, res) {
     return InternalServerException(res, error);
   }
 }
-
+//doubt in functioning 
 export async function updateCustomerAsAdmin(req, res) {
   try {
-    const validation = update_customer.validate(req.body);
+    const validation = update_customer_as_admin.validate(req.body);
     if (validation.error)
       return HttpException(res, 400, validation.error.details[0].message, {});
     const validated_req = validation.value ;
-    if (validated_req.password) {
-      validated_req.password = await encryptPassword(validated_req.password);
-    }
-    validated_req.id = req.user.id;
-    validated_req.hsn_codes_valid_upto = moment
-      .unix(validated_req.hsn_codes_valid_upto)
-      .toDate();
+
+    validated_req.hsn_codes_valid_upto = moment.toDate(validated_req.hsn_codes_valid_upto);
+      console.log(validated_req.hsn_codes_valid_upto)
     const customer = await models.updateCustomer(validated_req);
+    customer.password = undefined;
     return HttpResponse(res, 200, 'Customer Updated', {customer});
   } catch (error) {
     return InternalServerException(res, error);
   }
 }
-
+//ok tested
 export async function getAdminNewTokenPair(req, res) {
   try {
     const admin = req.user.data;
@@ -143,7 +144,7 @@ export async function getAdminNewTokenPair(req, res) {
     return InternalServerException(res, error);
   }
 }
-
+//ok tested
 export async function createCustomer(req, res) {
   try {
     const validation = create_customer.validate(req.body);
@@ -158,12 +159,13 @@ export async function createCustomer(req, res) {
       .unix(validated_req.hsn_codes_valid_upto)
       .toDate();
     const customer = await models.createCustomer(validated_req);
+    customer.password = undefined;
     return HttpResponse(res, 200, 'Customer created', {customer});
   } catch (error) {
     return InternalServerException(res, error);
   }
 }
-
+//okk tested
 export async function updateCustomer(req, res) {
   try {
     const validation = update_customer.validate(req.body);
@@ -175,22 +177,23 @@ export async function updateCustomer(req, res) {
     }
     validated_req.id = req.user.id;
     const customer = await models.updateCustomer(validated_req);
+    customer.password = undefined;
     return HttpResponse(res, 200, 'Customer Updated', {customer});
   } catch (error) {
     return InternalServerException(res, error);
   }
 }
-
+//okk tested
 export async function getCustomer(req, res) {
   try {
     const customer = await models.readCustomerById(req.user.id);
-    delete customer.password;
+    customer.password = undefined;
     return HttpResponse(res, 200, 'Customer Fetched', {customer});
   } catch (error) {
     return InternalServerException(res, error);
   }
 }
-
+//okk tested
 export async function loginCustomer(req, res) {
   try {
     const validation = login_customer.validate(req.body);
@@ -199,7 +202,8 @@ export async function loginCustomer(req, res) {
     const validated_req = validation.value ;
 
     const customer = await models.readCustomerByEmail(validated_req.email);
-    if (customer) {
+    console.log(customer);
+    if (!customer) {
       return HttpException(res, 400, 'Email or password is wrong', {});
     }
 
@@ -210,7 +214,7 @@ export async function loginCustomer(req, res) {
     if (!password_match) {
       return HttpException(res, 400, 'Email or password is wrong', {});
     }
-    delete customer.password;
+    customer.password = undefined;
     const token = signToken(UserType.CUSTOMER, {
       id: customer.id,
       user_type: UserType.CUSTOMER,
@@ -229,7 +233,7 @@ export async function loginCustomer(req, res) {
     return InternalServerException(res, error);
   }
 }
-
+//okk tested
 export async function getCustomerNewTokenPair(req, res) {
   try {
     const customer = await models.readCustomerById(req.user.id);
