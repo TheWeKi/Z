@@ -70,3 +70,13 @@ export async function readCustomerByEmail(
   const result = await Customer.findOne({ email: customer_email });
   return result;
 }
+
+// forgot password
+export async function resetPassword(customer) {
+  console.log('resetting password', customer);
+
+  const result = await Customer.findByIdAndUpdate(customer.id, customer, { new: true });
+
+  return result;
+
+}

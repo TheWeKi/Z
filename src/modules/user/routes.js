@@ -36,4 +36,9 @@ customer_routes.post(
   controllers.getCustomerNewTokenPair
 );
 
+customer_routes.patch(
+  '/resetPassword',
+  controllers.resetPassword
+)
+
 export default {admin_routes, customer_routes};

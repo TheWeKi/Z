@@ -1,19 +1,21 @@
-import {HttpResponse} from '../../handlers/HttpResponse.js';
-import {HttpException} from '../../handlers/HttpException.js';
+import { HttpResponse } from '../../handlers/HttpResponse.js';
+import { HttpException } from '../../handlers/HttpException.js';
 import InternalServerException from '../../handlers/InternalServerException.js';
+import jwt from 'jsonwebtoken';
 import {
   create_admin,
   create_customer,
+  email_validate,
   login_admin,
   login_customer,
   update_admin,
   update_customer,
   update_customer_as_admin,
 } from './validation.js';
-import {encryptPassword} from '../../utilities/crypto.js';
+import { encryptPassword } from '../../utilities/crypto.js';
 import * as models from './model.js';
 import bcrypt from 'bcrypt';
-import {UserType} from '../../enum.js';
+import { UserType } from '../../enum.js';
 import signToken from '../../utilities/jwt/sign_token.js';
 import refreshToken from '../../utilities/jwt/refresh_token.js';
 import moment from 'moment';
@@ -24,10 +26,10 @@ export async function createAdmin(req, res) {
     const validation = create_admin.validate(req.body);
     if (validation.error)
       return HttpException(res, 400, validation.error.details[0].message, {});
-    const validated_req = validation.value ;
+    const validated_req = validation.value;
     validated_req.password = await encryptPassword(validated_req.password);
     const admin = await models.createAdmin(validated_req);
-    return HttpResponse(res, 200, 'Admin created', {admin});
+    return HttpResponse(res, 200, 'Admin created', { admin });
   } catch (error) {
     return InternalServerException(res, error);
   }
@@ -48,7 +50,7 @@ export async function updateAdmin(req, res) {
     await models.updateAdmin({
       id: req.user.id,
       password: validated_req.password,
-    } );
+    });
     return HttpResponse(res, 200, 'Admin Updated', {});
   } catch (error) {
     return InternalServerException(res, error);
@@ -59,7 +61,7 @@ export async function getAdmin(req, res) {
   try {
     const admin = await models.readAdminById(req.user.id);
     admin.password = undefined;
-    return HttpResponse(res, 200, 'Admin Fetched', {admin: admin});
+    return HttpResponse(res, 200, 'Admin Fetched', { admin: admin });
   } catch (error) {
     return InternalServerException(res, error);
   }
@@ -71,7 +73,7 @@ export async function loginAdmin(req, res) {
     const validation = login_admin.validate(req.body);
     if (validation.error)
       return HttpException(res, 400, validation.error.details[0].message, {});
-    const validated_req = validation.value ;
+    const validated_req = validation.value;
     const admin = await models.readAdminByEmail(validated_req.email);
     if (!admin) {
       return HttpException(res, 400, 'Email or password is wrong', {});
@@ -104,19 +106,17 @@ export async function loginAdmin(req, res) {
     return InternalServerException(res, error);
   }
 }
-//doubt in functioning 
+//okk tested
 export async function updateCustomerAsAdmin(req, res) {
   try {
     const validation = update_customer_as_admin.validate(req.body);
     if (validation.error)
       return HttpException(res, 400, validation.error.details[0].message, {});
-    const validated_req = validation.value ;
+    const validated_req = validation.value;
 
-    validated_req.hsn_codes_valid_upto = moment.toDate(validated_req.hsn_codes_valid_upto);
-      console.log(validated_req.hsn_codes_valid_upto)
     const customer = await models.updateCustomer(validated_req);
     customer.password = undefined;
-    return HttpResponse(res, 200, 'Customer Updated', {customer});
+    return HttpResponse(res, 200, 'Customer Updated', { customer });
   } catch (error) {
     return InternalServerException(res, error);
   }
@@ -150,7 +150,7 @@ export async function createCustomer(req, res) {
     const validation = create_customer.validate(req.body);
     if (validation.error)
       return HttpException(res, 400, validation.error.details[0].message, {});
-    const validated_req = validation.value ;
+    const validated_req = validation.value;
     if (validated_req.password) {
       validated_req.password = await encryptPassword(validated_req.password);
     }
@@ -160,7 +160,7 @@ export async function createCustomer(req, res) {
       .toDate();
     const customer = await models.createCustomer(validated_req);
     customer.password = undefined;
-    return HttpResponse(res, 200, 'Customer created', {customer});
+    return HttpResponse(res, 200, 'Customer created', { customer });
   } catch (error) {
     return InternalServerException(res, error);
   }
@@ -171,14 +171,14 @@ export async function updateCustomer(req, res) {
     const validation = update_customer.validate(req.body);
     if (validation.error)
       return HttpException(res, 400, validation.error.details[0].message, {});
-    const validated_req = validation.value ;
+    const validated_req = validation.value;
     if (validated_req.password) {
       validated_req.password = await encryptPassword(validated_req.password);
     }
     validated_req.id = req.user.id;
     const customer = await models.updateCustomer(validated_req);
     customer.password = undefined;
-    return HttpResponse(res, 200, 'Customer Updated', {customer});
+    return HttpResponse(res, 200, 'Customer Updated', { customer });
   } catch (error) {
     return InternalServerException(res, error);
   }
@@ -188,7 +188,7 @@ export async function getCustomer(req, res) {
   try {
     const customer = await models.readCustomerById(req.user.id);
     customer.password = undefined;
-    return HttpResponse(res, 200, 'Customer Fetched', {customer});
+    return HttpResponse(res, 200, 'Customer Fetched', { customer });
   } catch (error) {
     return InternalServerException(res, error);
   }
@@ -199,7 +199,7 @@ export async function loginCustomer(req, res) {
     const validation = login_customer.validate(req.body);
     if (validation.error)
       return HttpException(res, 400, validation.error.details[0].message, {});
-    const validated_req = validation.value ;
+    const validated_req = validation.value;
 
     const customer = await models.readCustomerByEmail(validated_req.email);
     console.log(customer);
@@ -254,6 +254,74 @@ export async function getCustomerNewTokenPair(req, res) {
       token,
       refresh_token,
     });
+  } catch (error) {
+    return InternalServerException(res, error);
+  }
+}
+
+export async function resetPassword(req, res) {
+  try {
+
+    /*
+    
+    1. Email [Body]
+    2. Nodemailer Function jo mail karega - Reset Link jwt
+
+    3. jwt - user_id, email & generate temp password
+
+    3-1. Send Temp Password Mail
+    
+    4. Patch Password Function - user_id, password, confirm_password
+
+    */
+
+    const validation = email_validate.validate(req.body);
+    if (validation.error)
+      return HttpException(res, 400, validation.error.details[0].message, {});
+    const validated_req = validation.value;
+
+    const customer = await models.readCustomerByEmail(validated_req.email);
+
+    if (!customer) {
+      return HttpException(res, 400, 'Customer not found', {});
+    }
+
+    const reset_token = jwt.sign({
+      id: customer.id,
+      email: customer.email,
+    }, process.env.JWT_ACCESS_PRIVATE_KEY + customer.password, {
+      expiresIn: '1h',
+    });
+
+    // Send mail here with reset link and jwt as query string
+    console.log({ reset_token });
+
+    // validate token received in params
+
+    const decoded = await jwt.verify(reset_token, process.env.JWT_ACCESS_PRIVATE_KEY + customer.password);
+
+    if (!decoded) {
+      return HttpException(res, 400, 'Invalid Token or Expired', {});
+    }
+
+    console.log(decoded);
+
+    // update password
+    const random_password = Math.random().toString(36).slice(-8);
+    console.log({ random_password })
+    const password = await encryptPassword(random_password);
+    console.log({ password });
+
+    await models.resetPassword({
+      id: decoded.id,
+      password,
+    });
+
+    // Send random_password to email
+
+    return HttpResponse(res, 200, 'Password Reset', {});
+
+
   } catch (error) {
     return InternalServerException(res, error);
   }
