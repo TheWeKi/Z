@@ -19,7 +19,7 @@ import { UserType } from '../../enum.js';
 import signToken from '../../utilities/jwt/sign_token.js';
 import refreshToken from '../../utilities/jwt/refresh_token.js';
 import moment from 'moment';
-
+import nodemailer from 'nodemailer';
 //ok tested
 export async function createAdmin(req, res) {
   try {
@@ -29,6 +29,7 @@ export async function createAdmin(req, res) {
     const validated_req = validation.value;
     validated_req.password = await encryptPassword(validated_req.password);
     const admin = await models.createAdmin(validated_req);
+    admin.password = undefined;
     return HttpResponse(res, 200, 'Admin created', { admin });
   } catch (error) {
     return InternalServerException(res, error);
@@ -155,9 +156,6 @@ export async function createCustomer(req, res) {
       validated_req.password = await encryptPassword(validated_req.password);
     }
     console.log(validated_req);
-    validated_req.hsn_codes_valid_upto = moment
-      .unix(validated_req.hsn_codes_valid_upto)
-      .toDate();
     const customer = await models.createCustomer(validated_req);
     customer.password = undefined;
     return HttpResponse(res, 200, 'Customer created', { customer });
@@ -233,7 +231,6 @@ export async function loginCustomer(req, res) {
     return InternalServerException(res, error);
   }
 }
-//okk tested
 export async function getCustomerNewTokenPair(req, res) {
   try {
     const customer = await models.readCustomerById(req.user.id);
@@ -261,20 +258,6 @@ export async function getCustomerNewTokenPair(req, res) {
 
 export async function resetPassword(req, res) {
   try {
-
-    /*
-    
-    1. Email [Body]
-    2. Nodemailer Function jo mail karega - Reset Link jwt
-
-    3. jwt - user_id, email & generate temp password
-
-    3-1. Send Temp Password Mail
-    
-    4. Patch Password Function - user_id, password, confirm_password
-
-    */
-
     const validation = email_validate.validate(req.body);
     if (validation.error)
       return HttpException(res, 400, validation.error.details[0].message, {});
@@ -289,39 +272,100 @@ export async function resetPassword(req, res) {
     const reset_token = jwt.sign({
       id: customer.id,
       email: customer.email,
-    }, process.env.JWT_ACCESS_PRIVATE_KEY + customer.password, {
-      expiresIn: '1h',
+    }, process.env.JWT_ACCESS_PRIVATE_KEY, {
+      expiresIn: '15m',
     });
 
-    // Send mail here with reset link and jwt as query string
-    console.log({ reset_token });
+    const transporter = nodemailer.createTransport({
+      service: 'gmail',
+      auth: {
+        user: process.env.NODEMAILER_EMAIL,
+        pass: process.env.NODEMAILER_PASSWORD,
+      }
+    });
 
-    // validate token received in params
+    const mailOptions = {
+      from: process.env.NODEMAILER_EMAIL,
+      to: customer.email,
+      subject: 'Forgot Password Request',
+      text: 'This is a email to reset your password. Click the link below to reset your password.',
+      html:` <head>
+      <style>
+          body {
+              font-family: Arial, sans-serif;
+          }
+          .container {
+              width: 80%;
+              margin: auto;
+              padding: 20px;
+              border: 1px solid #ddd;
+              border-radius: 5px;
+          }
+          .button {
+              background-color: #4CAF50;
+              border: none;
+              color: white;
+              padding: 15px 32px;
+              text-align: center;
+              text-decoration: none;
+              display: inline-block;
+              font-size: 16px;
+              margin: 4px 2px;
+              cursor: pointer;
+          }
+      </style>
+  </head>
+  <body>
+      <div class="container">
+          <h2>Password Reset Request</h2>
+          <p>Hello,</p>
+          <p>We received a request to reset your password. Click the button below to reset it.</p>
+          <a href="${process.env.CLIENT_URL}/reset/${reset_token}" class="button">Reset Password</a>
+          <p>If you didn't request this, please ignore this email.</p>
+          <p>Thanks,</p>
+          <p>Your Team</p>
+      </div>
+  </body>`,
+    };
 
-    const decoded = await jwt.verify(reset_token, process.env.JWT_ACCESS_PRIVATE_KEY + customer.password);
+    transporter.sendMail(mailOptions, function (error, info) {
+      if (error) {
+        console.log(error);
+        return HttpException(res, 400, 'Error sending email', {});
+      } else {
+        console.log('Email sent: ' + info.response);
+        return HttpResponse(res, 200, 'Email sent', {});
+      }
+    }
+    );
 
-    if (!decoded) {
-      return HttpException(res, 400, 'Invalid Token or Expired', {});
+
+  } catch (error) {
+    return InternalServerException(res, error);
+  }
+}
+
+export async function resetPasswordPatch(req, res) {
+  try {
+    const { token } = req.params;
+    const { password, confirm_password } = req.body;
+
+    if (password !== confirm_password) {
+      return HttpException(res, 400, 'Passwords do not match', {});
+    }
+    
+    const decoded = jwt.verify(token, process.env.JWT_ACCESS_PRIVATE_KEY);
+
+    const customer = await models.readCustomerById(decoded.id);
+
+    if (!customer) {
+      return HttpException(res, 400, 'Customer not found', {});
     }
 
-    console.log(decoded);
+    customer.password = await encryptPassword(password);
+    await models.updateCustomer(customer);
 
-    // update password
-    const random_password = Math.random().toString(36).slice(-8);
-    console.log({ random_password })
-    const password = await encryptPassword(random_password);
-    console.log({ password });
-
-    await models.resetPassword({
-      id: decoded.id,
-      password,
-    });
-
-    // Send random_password to email
-
-    return HttpResponse(res, 200, 'Password Reset', {});
-
-
+    return HttpResponse(res, 200, 'Password reset', {});
   } catch (error) {
     return InternalServerException(res, error);
   }
