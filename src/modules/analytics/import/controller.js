@@ -5,19 +5,25 @@ import InternalServerException from '../../../handlers/InternalServerException.j
 import { HttpException } from '../../../handlers/HttpException.js';
 import { insertImportData } from './utils/insertImportData.js';
 
+import fs from 'fs';
+
 export async function uploadImportData(req, res) {
   try {
-    const filePath = './src/public/test.xlsx';
+    const filePath = req.file.path;
     const import_data = await processImportData(filePath);
 
     if (!import_data || !import_data.length) {
       return HttpResponse(res, 400, 'No data found in the Excel sheet.', {});
     }
     try {
-      await insertImportData(import_data)
+      await insertImportData(import_data);
+
+      // delete the file after processing
+      fs.unlinkSync(filePath);
     } catch (error) {
       throw HttpException(res, 500, 'Error Inserting Import Data', {});
     }
+
     return HttpResponse(
       res,
       200,
