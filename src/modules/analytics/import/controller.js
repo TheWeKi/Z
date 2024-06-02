@@ -21,6 +21,8 @@ export async function uploadImportData(req, res) {
       // delete the file after processing
       fs.unlinkSync(filePath);
     } catch (error) {
+      // delete the file in case of error
+      fs.unlinkSync(filePath);
       throw HttpException(res, 500, 'Error Inserting Import Data', {});
     }
 
