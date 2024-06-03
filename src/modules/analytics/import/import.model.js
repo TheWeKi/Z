@@ -1,4 +1,5 @@
 import mongoose from 'mongoose';
+
 const importSchema = new mongoose.Schema({
     Type: { type: String, default: "NA" },
     Indian_Port: { type: String, default: "NA" },
