@@ -14,7 +14,27 @@ export async function processImportData(filePath) {
   const jsonResult = jsonData.map(row => {
     const obj = {};
     Object.keys(row).forEach(key => {
-      obj[key.trim()] = row[key];
+
+      if (key === 'Date') {
+
+        let dateStr = row[key]; // e.g., "DD/MM/YYYY" or "DD-MM-YYYY"
+
+        console.log(dateStr);
+
+        // datestr can be in the format "22/03/2022" or "22-03-2022"
+        dateStr = dateStr.replace(/-/g, "/"); // replace "-" with "/"
+        // split it such that we get ["22", "03", "2022"]
+        let parts = dateStr.split("/"); // split the string
+
+        // Please note that the JavaScript Date object uses 0-based months, i.e., January is 0, February is 1, etc.
+        let dateObj = new Date(parts[2], parts[1] - 1, parts[0]);
+        console.log(dateObj.toString());
+        // let formattedDate = dateObj.toISOString();
+
+        obj[key.trim()] = dateObj.toString();
+      } else {
+        obj[key.trim()] = row[key];
+      }
     });
     return obj;
   });

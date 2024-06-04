@@ -16,8 +16,9 @@ export async function uploadImportData(req, res) {
     if (!import_data || !import_data.length) {
       return HttpResponse(res, 400, 'No data found in the Excel sheet.', {});
     }
+
     try {
-      await insertImportData(import_data);
+      // await insertImportData(import_data);
 
       // delete the file after processing
       fs.unlinkSync(filePath);
@@ -48,21 +49,21 @@ export async function uploadImportData(req, res) {
 // country -> Country
 
 export const search_text = Joi.object({
-  hs_code: Joi.string().allow(''),
-  product_name: Joi.string().allow(''),
+  hs_code: Joi.string().default(''),
+  product_name: Joi.string(),
 }).or('hs_code', 'product_name');
 
 export const filters = Joi.object({
-  buyer_name: Joi.string().default(''),
-  supplier_name: Joi.string().default(''),
-  port_code: Joi.string().default(''),
-  unit: Joi.string().default(''),
-  country: Joi.string().default(''),
+  buyer_name: Joi.string(),
+  supplier_name: Joi.string(),
+  port_code: Joi.string(),
+  unit: Joi.string(),
+  country: Joi.string(),
 });
 
 export const pagination = Joi.object({
-  page_index: Joi.number().min(1).required(),
-  page_size: Joi.number().default(25),
+  page_index: Joi.string().min(1).required(),
+  page_size: Joi.string().default(25),
 });
 
 export const duration = Joi.object({
@@ -71,10 +72,10 @@ export const duration = Joi.object({
 });
 
 export const search_import = Joi.object({
-  search_text: search_text.default({}).required(),
-  filters: filters.default({}),
-  duration: duration.default({}).required(),
-  pagination: pagination.default({}).required(),
+  search_text: search_text.required(),
+  filters: filters,
+  duration: duration.required(),
+  pagination: pagination.required(),
 });
 
 /*
@@ -124,18 +125,61 @@ export async function searchImportData(req, res) {
     //   duration: validated_req.duration,
     // });
 
-    const { search_text, pagination, duration, filters } = validated_req;
+    const { search_text, pagination, filters, duration } = validated_req;
     const { hs_code, product_name } = search_text;
     const { start_date, end_date } = duration;
     const { page_index, page_size } = pagination;
 
     const skip = (page_index - 1) * page_size;
 
-    const searchResult = await Import.find({
-      HS_Code: hs_code.toString(),
-    })
-      .skip(skip)
-      .limit(parseInt(page_size));
+    const query = {
+      HS_Code: hs_code,
+      Item_Description: product_name,
+
+      Importer_Name: filters.buyer_name,
+      Supplier_Name: filters.supplier_name,
+      Indian_Port: filters.port_code,
+      UQC: filters.unit,
+      Country: filters.country,
+
+      Date: { $gte: start_date, $lte: end_date },
+    };
+
+    console.log(query);
+    
+    // Remove fields from query if they are not provided
+    Object.keys(query).forEach((key) => {
+      if (!query[key]) {
+        delete query[key];
+      }
+    });
+    
+    const searchResult = await Import.find(query).skip(skip).limit(parseInt(page_size));
+
+    // const searchResult = await Import.find({
+    //   HS_Code: hs_code,
+    //   Item_Description: product_name,
+
+    //   Buyer_Name: filters.buyer_name,
+    //   Supplier_Name: filters.supplier_name,
+    //   Indian_Port: filters.port_code,
+    //   UQC: filters.unit,
+    //   Country: filters.country,
+
+    //   // Date: { $gte: start_date, $lte: end_date },
+    // })
+    //   .skip(skip)
+    //   .limit(parseInt(page_size));
+
+    // const searchResult = await Import.find({
+    //   HS_Code: "30029010",
+
+    //   Date: {
+    //     $gte: req.body.duration.start_date,
+    //     $lte: req.body.duration.end_date,
+    //   },
+      
+    // });
 
     return HttpResponse(res, 200, 'records fetched successfully', searchResult);
   } catch (error) {

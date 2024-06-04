@@ -5,7 +5,7 @@ const importSchema = new mongoose.Schema({
     Indian_Port: { type: String, default: "NA" },
     Mode_Of_Shipment: { type: String, default: "NA" },
     Shipment_ID: { type: String, default: "NA" },
-    Date: { type: String, default: "NA" },
+    Date: { type: Date, default: null },
     BE_Type: { type: String, default: "NA" },
     AG: { type: String, default: "NA" },
     Month: { type: String, default: "NA" },
