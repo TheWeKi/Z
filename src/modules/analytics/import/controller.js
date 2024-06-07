@@ -7,6 +7,8 @@ import Joi from 'joi';
 import fs from 'fs';
 import { Import } from './import.model.js';
  
+import { search_import } from './model.js';
+import { fetchImportData } from './utils/searchImportData.js';
 
 export async function uploadImportData(req, res) {
   try {
@@ -48,35 +50,7 @@ export async function uploadImportData(req, res) {
 // produt name -> item description
 // country -> Country
 
-export const search_text = Joi.object({
-  hs_code: Joi.string().default(''),
-  product_name: Joi.string(),
-}).or('hs_code', 'product_name');
 
-export const filters = Joi.object({
-  buyer_name: Joi.string(),
-  supplier_name: Joi.string(),
-  port_code: Joi.string(),
-  unit: Joi.string(),
-  country: Joi.string(),
-});
-
-export const pagination = Joi.object({
-  page_index: Joi.string().min(1).required(),
-  page_size: Joi.string().default(25),
-});
-
-export const duration = Joi.object({
-  start_date: Joi.date().required().less(Joi.ref('end_date')),
-  end_date: Joi.date().required(),
-});
-
-export const search_import = Joi.object({
-  search_text: search_text.required(),
-  filters: filters,
-  duration: duration.required(),
-  pagination: pagination.required(),
-});
 
 /*
 export async function searchImportData(req: Request, res: Response) {
@@ -116,102 +90,7 @@ export async function searchImportData(req, res) {
       );
     const validated_req = validation.value;
 
-    // return HttpResponse(res, 200, 'records fetched successfully', validated_req);
-
-    // const searchResult = await dynamicImportSearch({
-    //   search_text: validated_req.search_text,
-    //   filter: validated_req.filters,
-    //   pagination: validated_req.pagination,
-    //   duration: validated_req.duration,
-    // });
-
-    const { search_text, pagination, filters, duration } = validated_req;
-    const { hs_code, product_name } = search_text;
-    const { start_date, end_date } = duration;
-    const { page_index, page_size } = pagination;
-
-    const skip = (page_index - 1) * page_size;
-
-    /*
-    const query = {
-      HS_Code: hs_code,
-      // Item_Description: product_name,
-
-      // Importer_Name: filters.buyer_name,
-      // Supplier_Name: filters.supplier_name,
-      // Indian_Port: filters.port_code,
-      // UQC: filters.unit,
-      // Country: filters.country,
-
-      Item_Description: { $regex: new RegExp(product_name, 'i') },
-
-      Importer_Name: { $regex: new RegExp(filters.buyer_name, 'i') },
-      Supplier_Name: { $regex: new RegExp(filters.supplier_name, 'i') },
-      Indian_Port: { $regex: new RegExp(filters.port_code, 'i') },
-      UQC: { $regex: new RegExp(filters.unit, 'i') },
-      Country: { $regex: new RegExp(filters.country, 'i') },
-
-      Date: { $gte: start_date, $lte: end_date },
-    };
-
-    */
-
-    const query = {
-      HS_Code: hs_code ? hs_code : '',
-      Item_Description: product_name ? { $regex: new RegExp(product_name, 'i') } : '',
-    
-      Importer_Name: filters && filters.buyer_name ? { $regex: new RegExp(filters.buyer_name, 'i') } : '',
-      Supplier_Name: filters && filters.supplier_name ? { $regex: new RegExp(filters.supplier_name, 'i') } : '',
-      Indian_Port: filters && filters.port_code ? { $regex: new RegExp(filters.port_code, 'i') } : '',
-      UQC: filters && filters.unit ? { $regex: new RegExp(filters.unit, 'i') } : '',
-      Country: filters && filters.country ? { $regex: new RegExp(filters.country, 'i') } : '',
-    
-      Date: { $gte: start_date, $lte: end_date }
-    };
-
-    // console.log(query);
-    
-    // Remove fields from query if they are not provided
-    // Object.keys(query).forEach((key) => {
-    //   if (!query[key]) {
-    //     delete query[key];
-    //   }
-    // });
-
-    Object.keys(query).forEach((key) => {
-      if (!query[key] || (query[key].$regex && query[key].$regex.source === "(?:)")) {
-        delete query[key];
-      }
-    });
-
-    // console.log(query);
-
-    const searchResult = await Import.find(query).skip(skip).limit(parseInt(page_size));
-
-    // const searchResult = await Import.find({
-    //   HS_Code: hs_code,
-    //   Item_Description: product_name,
-
-    //   Buyer_Name: filters.buyer_name,
-    //   Supplier_Name: filters.supplier_name,
-    //   Indian_Port: filters.port_code,
-    //   UQC: filters.unit,
-    //   Country: filters.country,
-
-    //   // Date: { $gte: start_date, $lte: end_date },
-    // })
-    //   .skip(skip)
-    //   .limit(parseInt(page_size));
-
-    // const searchResult = await Import.find({
-    //   HS_Code: "30029010",
-
-    //   Date: {
-    //     $gte: req.body.duration.start_date,
-    //     $lte: req.body.duration.end_date,
-    //   },
-      
-    // });
+    const searchResult = await fetchImportData(validated_req, false);
 
     return HttpResponse(res, 200, 'records fetched successfully', searchResult);
   } catch (error) {

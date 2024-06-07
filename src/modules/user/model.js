@@ -32,8 +32,8 @@ export async function readAdminByEmail(admin_email) {
 }
 
 export async function createCustomer(customer) {
-  if (customer.hsn_codes)
-    customer.hsn_codes = JSON.stringify(customer.hsn_codes);
+  // if (customer.hsn_codes)
+  //   customer.hsn_codes = JSON.stringify(customer.hsn_codes);
   console.log('creating customer', customer);
 
   const result = await Customer.create(customer);
@@ -42,8 +42,8 @@ export async function createCustomer(customer) {
 }
 
 export async function updateCustomer(customer) {
-  if (customer.hsn_codes)
-    customer.hsn_codes = JSON.stringify(customer.hsn_codes);
+  // if (customer.hsn_codes)
+  //   customer.hsn_codes = JSON.stringify(customer.hsn_codes);
   console.log('updating customer', customer);
 
   const result = await Customer.findByIdAndUpdate(customer.id, customer, { new: true });
