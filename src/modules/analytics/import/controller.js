@@ -18,7 +18,7 @@ export async function uploadImportData(req, res) {
     }
 
     try {
-      // await insertImportData(import_data);
+      await insertImportData(import_data);
 
       // delete the file after processing
       fs.unlinkSync(filePath);
@@ -132,28 +132,60 @@ export async function searchImportData(req, res) {
 
     const skip = (page_index - 1) * page_size;
 
+    /*
     const query = {
       HS_Code: hs_code,
-      Item_Description: product_name,
+      // Item_Description: product_name,
 
-      Importer_Name: filters.buyer_name,
-      Supplier_Name: filters.supplier_name,
-      Indian_Port: filters.port_code,
-      UQC: filters.unit,
-      Country: filters.country,
+      // Importer_Name: filters.buyer_name,
+      // Supplier_Name: filters.supplier_name,
+      // Indian_Port: filters.port_code,
+      // UQC: filters.unit,
+      // Country: filters.country,
+
+      Item_Description: { $regex: new RegExp(product_name, 'i') },
+
+      Importer_Name: { $regex: new RegExp(filters.buyer_name, 'i') },
+      Supplier_Name: { $regex: new RegExp(filters.supplier_name, 'i') },
+      Indian_Port: { $regex: new RegExp(filters.port_code, 'i') },
+      UQC: { $regex: new RegExp(filters.unit, 'i') },
+      Country: { $regex: new RegExp(filters.country, 'i') },
 
       Date: { $gte: start_date, $lte: end_date },
     };
 
-    console.log(query);
+    */
+
+    const query = {
+      HS_Code: hs_code ? hs_code : '',
+      Item_Description: product_name ? { $regex: new RegExp(product_name, 'i') } : '',
+    
+      Importer_Name: filters && filters.buyer_name ? { $regex: new RegExp(filters.buyer_name, 'i') } : '',
+      Supplier_Name: filters && filters.supplier_name ? { $regex: new RegExp(filters.supplier_name, 'i') } : '',
+      Indian_Port: filters && filters.port_code ? { $regex: new RegExp(filters.port_code, 'i') } : '',
+      UQC: filters && filters.unit ? { $regex: new RegExp(filters.unit, 'i') } : '',
+      Country: filters && filters.country ? { $regex: new RegExp(filters.country, 'i') } : '',
+    
+      Date: { $gte: start_date, $lte: end_date }
+    };
+
+    // console.log(query);
     
     // Remove fields from query if they are not provided
+    // Object.keys(query).forEach((key) => {
+    //   if (!query[key]) {
+    //     delete query[key];
+    //   }
+    // });
+
     Object.keys(query).forEach((key) => {
-      if (!query[key]) {
+      if (!query[key] || (query[key].$regex && query[key].$regex.source === "(?:)")) {
         delete query[key];
       }
     });
-    
+
+    // console.log(query);
+
     const searchResult = await Import.find(query).skip(skip).limit(parseInt(page_size));
 
     // const searchResult = await Import.find({

@@ -19,7 +19,7 @@ export async function processImportData(filePath) {
 
         let dateStr = row[key]; // e.g., "DD/MM/YYYY" or "DD-MM-YYYY"
 
-        console.log(dateStr);
+        // console.log(dateStr);
 
         // datestr can be in the format "22/03/2022" or "22-03-2022"
         dateStr = dateStr.replace(/-/g, "/"); // replace "-" with "/"
@@ -28,7 +28,7 @@ export async function processImportData(filePath) {
 
         // Please note that the JavaScript Date object uses 0-based months, i.e., January is 0, February is 1, etc.
         let dateObj = new Date(parts[2], parts[1] - 1, parts[0]);
-        console.log(dateObj.toString());
+        // console.log(dateObj.toString());
         // let formattedDate = dateObj.toISOString();
 
         obj[key.trim()] = dateObj.toString();
