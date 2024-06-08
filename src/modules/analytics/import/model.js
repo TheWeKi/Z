@@ -2,7 +2,6 @@ import { HttpException } from '../../../handlers/HttpException.js';
 import { HttpResponse } from '../../../handlers/HttpResponse.js';
 import jwt from 'jsonwebtoken';
 import Joi from 'joi';
-import { Import } from './import.model.js';
 import InternalServerException from '../../../handlers/InternalServerException.js';
 import { Customer } from '../../user/customer.model.js';
 import { fetchImportData } from './utils/searchImportData.js';
@@ -37,25 +36,20 @@ export const search_import = Joi.object({
   pagination: pagination.required(),
 });
 
-// User no HS_Code || User No Authenticated -> Logic 1
-// User has HS_Code and Authenticated -> Logic 2
-
-// Logic 1 - Done
-/*
-  returns {
-    Item_Description,
-    HS_Code,
-    Quantity,
-    Unit,
-    Country_Of_Origin,
-    Date
-  }
-*/
-
-/* Logic 2 -> Return Everything  DONE*/
-
 export async function isHSAuth(req, res, next) {
   try {
+
+    const validation = search_import.validate(req.body);
+    if (validation.error)
+      return HttpException(
+        res,
+        400,
+        validation.error.details[0].message,
+        {}
+      );
+    const validated_req = validation.value;
+
+    req.validated_req = validated_req;
 
     const authHeader = req.headers['authorization'];
     const token = authHeader && authHeader.split(' ')[1];
@@ -73,16 +67,6 @@ export async function isHSAuth(req, res, next) {
 
     if (!customer) return HttpException(res, 404, 'User not found');
 
-    const validation = search_import.validate(req.body);
-    if (validation.error)
-      return HttpException(
-        res,
-        400,
-        validation.error.details[0].message,
-        {}
-      );
-    const validated_req = validation.value;
-
     if (!customer.hsn_codes ||
       customer.hsn_codes.length === 0 ||
       !customer.hsn_codes.includes(validated_req.search_text.hs_code) ||
@@ -97,6 +81,3 @@ export async function isHSAuth(req, res, next) {
     return InternalServerException(res, error);
   }
 }
-
-// HS_Code in Array Format i.e., Array of Strings
-// Handle Search if HSN Code not exist but Product Name is given 

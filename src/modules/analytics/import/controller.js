@@ -3,11 +3,8 @@ import { processImportData } from './utils/processor.js';
 import InternalServerException from '../../../handlers/InternalServerException.js';
 import { HttpException } from '../../../handlers/HttpException.js';
 import { insertImportData } from './utils/insertImportData.js';
-import Joi from 'joi';
 import fs from 'fs';
-import { Import } from './import.model.js';
- 
-import { search_import } from './model.js';
+
 import { fetchImportData } from './utils/searchImportData.js';
 
 export async function uploadImportData(req, res) {
@@ -51,44 +48,9 @@ export async function uploadImportData(req, res) {
 // country -> Country
 
 
-
-/*
-export async function searchImportData(req: Request, res: Response) {
-  try {
-    const validation = search_import.validate(req.body);
-    if (validation.error)
-      return HttpException(
-        res,
-        400,
-
-        validation.error.details[0].message,
-        {}
-      );
-    const validated_req = validation.value as IDynamicSearchImportParams;
-    const searchResult = await dynamicImportSearch({
-      search_text: validated_req.search_text,
-      filter: validated_req.filter,
-      pagination: validated_req.pagination,
-      duration: validated_req.duration,
-    });
-    return HttpResponse(res, 200, 'records fetched successfully', searchResult);
-  } catch (error) {
-    return InternalServerException(res, error);
-  }
-}
-*/
-
 export async function searchImportData(req, res) {
   try {
-    const validation = search_import.validate(req.body);
-    if (validation.error)
-      return HttpException(
-        res,
-        400,
-        validation.error.details[0].message,
-        {}
-      );
-    const validated_req = validation.value;
+    const validated_req = req.validated_req;
 
     const searchResult = await fetchImportData(validated_req, false);
 

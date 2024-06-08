@@ -1,5 +1,6 @@
 import {Customer} from './customer.model.js';
 import {Admin} from './admin.model.js';
+import { HttpException } from '../../handlers/HttpException.js';
 
 export async function createAdmin(admin) {
   console.log('creating admin', admin);
@@ -46,11 +47,18 @@ export async function updateCustomer(customer) {
   //   customer.hsn_codes = JSON.stringify(customer.hsn_codes);
   console.log('updating customer', customer);
 
-  const result = await Customer.findByIdAndUpdate(customer.id, customer, { new: true });
+  const existingCustomer = await Customer.findById(customer.id);
 
-  return result;
+  if(!existingCustomer) {
+    return HttpException(res, 404, 'Customer not found');
+  }
+
+  existingCustomer.hsn_codes = [...new Set([...existingCustomer.hsn_codes, ...customer.hsn_codes])];
+  existingCustomer.hsn_codes_valid_upto = new Date(customer.hsn_codes_valid_upto);
+
+  const newCustomer = await existingCustomer.save();
+  return newCustomer;
 }
-
 
 export async function readCustomerById(
   customer_id

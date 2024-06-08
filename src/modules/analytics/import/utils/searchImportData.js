@@ -8,6 +8,8 @@ export const fetchImportData = async (validated_req, all) => {
 
     const skip = (page_index - 1) * page_size;
 
+    let searchResult;
+
     const query = {
         HS_Code: hs_code ? hs_code : '',
         Item_Description: product_name ? { $regex: new RegExp(product_name, 'i') } : '',
@@ -27,14 +29,17 @@ export const fetchImportData = async (validated_req, all) => {
         }
     });
 
-    const searchResult = await Import.find(query).skip(skip).limit(parseInt(page_size));
+    if(query.HS_Code && query.Item_Description) {
+        delete query.Item_Description;
+    }
+
+    searchResult = await Import.find(query).skip(skip).limit(parseInt(page_size));
 
     if(!all) {
         return searchResult.map((item) => {
             const { Item_Description, HS_Code, Quantity, UQC, Country, Date } = item;
             return { Item_Description, HS_Code, Quantity, UQC, Country, Date };
         });
-            
     }
     return searchResult;
 }
