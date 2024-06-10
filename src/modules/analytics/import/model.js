@@ -62,6 +62,7 @@ export async function isHSAuth(req, res, next) {
     } catch (error) {
       return HttpException(res, 401, 'Invalid Token');
     }
+    console.log(decodedToken)
     if (decodedToken.user_type !== 'customer') return HttpException(res, 401, 'Invalid Token');
     const customer = await Customer.findById(decodedToken.id).select('-password');
 
@@ -70,9 +71,9 @@ export async function isHSAuth(req, res, next) {
     if (!customer.hsn_codes ||
       customer.hsn_codes.length === 0 ||
       !customer.hsn_codes.includes(validated_req.search_text.hs_code) ||
-      new Date(customer.hsn_codes_valid_upto) >= new Date()
+      customer.hsn_codes_valid_upto< Date.now()
     ) return next();
-
+    console.log("Hello I am here");
     const searchResult = await fetchImportData(validated_req, true);
 
     return HttpResponse(res, 200, 'records fetched successfully', searchResult);
