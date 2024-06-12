@@ -1,5 +1,9 @@
 import { Import } from '../import.model.js'
 
+function escapeRegExp(string) {
+    return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); // $& means the whole matched string
+}
+
 export const fetchImportData = async (validated_req, all) => {
     const { search_text, pagination, filters, duration } = validated_req;
     const { hs_code, product_name } = search_text;
@@ -11,8 +15,8 @@ export const fetchImportData = async (validated_req, all) => {
     let searchResult;
 
     const query = {
-        HS_Code: hs_code ? hs_code : '',
-        Item_Description: product_name ? { $regex: new RegExp(product_name, 'i') } : '',
+        HS_Code: hs_code ? { $regex: new RegExp('^' + hs_code, 'i') } : '',
+        Item_Description: product_name ? { $regex: new RegExp(escapeRegExp(product_name), 'i') } : '',
 
         Importer_Name: filters && filters.buyer_name ? { $regex: new RegExp(filters.buyer_name, 'i') } : '',
         Supplier_Name: filters && filters.supplier_name ? { $regex: new RegExp(filters.supplier_name, 'i') } : '',
