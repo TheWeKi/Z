@@ -54,7 +54,10 @@ export async function updateCustomer(customer) {
   }
 
   existingCustomer.hsn_codes = [...new Set([...existingCustomer.hsn_codes, ...customer.hsn_codes])];
-  existingCustomer.hsn_codes_valid_upto = new Date(customer.hsn_codes_valid_upto);
+  
+  if(customer.hsn_codes_valid_upto){
+    existingCustomer.hsn_codes_valid_upto = new Date(customer.hsn_codes_valid_upto);
+  }
 
   const newCustomer = await existingCustomer.save();
   return newCustomer;
