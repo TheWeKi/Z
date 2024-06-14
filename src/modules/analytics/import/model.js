@@ -38,7 +38,7 @@ export const search_import = Joi.object({
 
 function isSubscribedHSCode(customer, hs_code) {
   for (let code of customer.hsn_codes) {
-    if (hs_code.includes(code)) {
+    if (hs_code.startsWith(code)) {
       return true;
     }
   }
