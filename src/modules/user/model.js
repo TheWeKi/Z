@@ -53,9 +53,9 @@ export async function updateCustomer(customer) {
     return HttpException(res, 404, 'Customer not found');
   }
 
-  existingCustomer.hsn_codes = [...new Set([...existingCustomer.hsn_codes, ...customer.hsn_codes])];
+  existingCustomer.hsn_codes = [...new Set([...customer.hsn_codes])];
   
-  if(customer.hsn_codes_valid_upto){
+  if(customer.hsn_codes_valid_upto) {
     existingCustomer.hsn_codes_valid_upto = new Date(customer.hsn_codes_valid_upto);
   }
 

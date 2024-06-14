@@ -18,11 +18,11 @@ export const fetchImportData = async (validated_req, all) => {
         HS_Code: hs_code ? { $regex: new RegExp('^' + hs_code, 'i') } : '',
         Item_Description: product_name ? { $regex: new RegExp(escapeRegExp(product_name), 'i') } : '',
 
-        Importer_Name: filters && filters.buyer_name ? { $regex: new RegExp(filters.buyer_name, 'i') } : '',
-        Supplier_Name: filters && filters.supplier_name ? { $regex: new RegExp(filters.supplier_name, 'i') } : '',
-        Indian_Port: filters && filters.port_code ? { $regex: new RegExp(filters.port_code, 'i') } : '',
-        UQC: filters && filters.unit ? { $regex: new RegExp(filters.unit, 'i') } : '',
-        Country: filters && filters.country ? { $regex: new RegExp(filters.country, 'i') } : '',
+        Importer_Name: filters && filters.buyer_name ? { $regex: new RegExp(escapeRegExp(filters.buyer_name), 'i') } : '',
+        Supplier_Name: filters && filters.supplier_name ? { $regex: new RegExp(escapeRegExp(filters.supplier_name), 'i') } : '',
+        Indian_Port: filters && filters.port_code ? { $regex: new RegExp(escapeRegExp(filters.port_code), 'i') } : '',
+        UQC: filters && filters.unit ? { $regex: new RegExp(escapeRegExp(filters.unit), 'i') } : '',
+        Country: filters && filters.country ? { $regex: new RegExp(escapeRegExp(filters.country), 'i') } : '',
 
         Date: { $gte: start_date, $lte: end_date }
     };
@@ -33,17 +33,29 @@ export const fetchImportData = async (validated_req, all) => {
         }
     });
 
-    if(query.HS_Code && query.Item_Description) {
-        delete query.Item_Description;
-    }
+    // if(query.HS_Code && query.Item_Description) {
+    //     delete query.Item_Description;
+    // }
 
     searchResult = await Import.find(query).skip(skip).limit(parseInt(page_size));
 
     if(!all) {
-        return searchResult.map((item) => {
+        searchResult = searchResult.map((item) => {
             const { Item_Description, HS_Code, Quantity, UQC, Country, Date } = item;
             return { Item_Description, HS_Code, Quantity, UQC, Country, Date };
         });
     }
-    return searchResult;
+
+    const total_records = await Import.countDocuments(query);
+
+    return {
+        searchResult, 
+        subscription: false,
+        pagination: { 
+            page_index: parseInt(page_index), 
+            page_size: parseInt(page_size),
+            total_pages: Math.ceil(total_records / page_size),
+            total_records
+        }
+    };
 }
