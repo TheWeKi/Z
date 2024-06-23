@@ -114,7 +114,7 @@ export async function updateCustomerAsAdmin(req, res) {
     if (validation.error)
       return HttpException(res, 400, validation.error.details[0].message, {});
     const validated_req = validation.value;
-
+    
     const customer = await models.updateCustomer(validated_req);
     customer.password = undefined;
     return HttpResponse(res, 200, 'Customer Updated', { customer });

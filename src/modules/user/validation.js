@@ -53,4 +53,6 @@ export const update_customer_as_admin = Joi.object({
   id: Joi.string().required(),
   hsn_codes: Joi.array().items(Joi.string().min(1).max(70).trim()).min(1),
   hsn_codes_valid_upto: Joi.date().greater('now'),
+  buyer_sub: Joi.number().min(1),
+  buyer_sub_valid_upto: Joi.date().greater('now'),
 });

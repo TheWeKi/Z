@@ -42,6 +42,24 @@ const CustomerSchema = new mongoose.Schema({
     type: Date,
   },
 
+  buyer_sub:{
+    type: Number,
+    default: 0,
+  },
+
+  buyer_sub_valid_upto:{
+    type: Date,
+  },
+
+  supplier_sub:{
+    type: Number,
+    default: 0,
+  },
+
+  supplier_sub_valid_upto:{
+    type: Date,
+  },
+
   createdAt: {
     type: Date,
   },

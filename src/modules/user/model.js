@@ -52,13 +52,17 @@ export async function updateCustomer(customer) {
   if(!existingCustomer) {
     return HttpException(res, 404, 'Customer not found');
   }
-
+  if(customer.hsn_codes)
   existingCustomer.hsn_codes = [...new Set([...customer.hsn_codes])];
   
   if(customer.hsn_codes_valid_upto) {
     existingCustomer.hsn_codes_valid_upto = new Date(customer.hsn_codes_valid_upto);
   }
+  if(customer.buyer_sub)
+  existingCustomer.buyer_sub = customer.buyer_sub;
 
+  if(customer.buyer_sub_valid_upto)
+  existingCustomer.buyer_sub_valid_upto = new Date(customer.buyer_sub_valid_upto);
   const newCustomer = await existingCustomer.save();
   return newCustomer;
 }
