@@ -61,11 +61,18 @@ export async function updateCustomer(customer) {
   if(customer.buyer_sub)
   existingCustomer.buyer_sub = customer.buyer_sub;
 
+  if(customer.supplier_sub)
+  existingCustomer.supplier_sub = customer.supplier_sub;
+
+  if(customer.supplier_sub_valid_upto)
+  existingCustomer.supplier_sub_valid_upto = new Date(customer.supplier_sub_valid_upto);
+
   if(customer.buyer_sub_valid_upto)
   existingCustomer.buyer_sub_valid_upto = new Date(customer.buyer_sub_valid_upto);
   const newCustomer = await existingCustomer.save();
   return newCustomer;
 }
+
 
 export async function readCustomerById(
   customer_id
