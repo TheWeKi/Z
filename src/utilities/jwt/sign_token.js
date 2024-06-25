@@ -9,12 +9,12 @@ export default (user_type, entity) => {
   }
 
   return jwt.sign(entity, process.env.JWT_ACCESS_PRIVATE_KEY, {
-    expiresIn,
+    expiresIn: process.env.JWT_EXPIRY,
   });
 };
 
 export function shortSignToken(entity) {
   return jwt.sign(entity, process.env.JWT_ACCESS_PRIVATE_KEY, {
-    expiresIn: 120,
+    expiresIn: process.env.JWT_EXPIRY,
   });
 }

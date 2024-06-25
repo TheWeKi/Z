@@ -273,7 +273,7 @@ export async function resetPassword(req, res) {
       id: customer.id,
       email: customer.email,
     }, process.env.JWT_ACCESS_PRIVATE_KEY, {
-      expiresIn: '15m',
+      expiresIn: process.env.JWT_EXPIRY,
     });
 
     const transporter = nodemailer.createTransport({

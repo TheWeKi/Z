@@ -8,6 +8,6 @@ export default (user_type, entity) => {
   }
 
   return jwt.sign(entity, process.env.JWT_ACCESS_PRIVATE_KEY, {
-    expiresIn
+    expiresIn: process.env.JWT_REFRESH_EXPIRY
   });
 };
