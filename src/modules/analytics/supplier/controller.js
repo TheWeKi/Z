@@ -6,6 +6,7 @@ import { insertImportData } from './utils/insertImportData.js';
 import fs from 'fs';
 import { Buyer } from './buyer.model.js';
 import { Customer } from '../../user/customer.model.js';
+import { isValidObjectId } from 'mongoose';
 
 export async function uploadImportData(req, res) {
   try {
@@ -58,10 +59,15 @@ export async function fetchBuyerData(req, res) {
     const totalCount = await Buyer.countDocuments({ Company_Name: { $regex: search, $options: 'i' } });
 
     const response = {
-        data: result,
-        totalDocuments: totalCount,
-        };
+      searchResult: result,
 
+      pagination: {
+        "page_index": page_index,
+        "page_size": page_size,
+        "total_pages": Math.ceil(totalCount / page_size),
+        "total_records": totalCount
+      }
+    };
 
     return HttpResponse(res, 200, 'records fetched successfully', response);
   } catch (error) {
@@ -83,6 +89,10 @@ export async function fetchBuyerDetails(req, res) {
         const id = req.params.id;
         const userId = req.user.id;
 
+        if (!id || isValidObjectId(id) === false) {
+          return HttpException(res, 400, 'Invalid ID', {});
+        }
+
         const user = await Customer.findById(userId);
 
         
@@ -98,7 +108,10 @@ export async function fetchBuyerDetails(req, res) {
         if(user.supplier_sub_valid_upto < new Date()){
             return HttpResponse(res, 403, 'Subscription Expired', {});
         }
-        const data = await Buyer.findById(id);
+        let data;
+        
+          data = await Buyer.findById(id);
+        
         if (!data) {
             return HttpResponse(res, 404, 'Data Not found', {});
         }

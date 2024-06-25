@@ -42,6 +42,14 @@ const CustomerSchema = new mongoose.Schema({
     type: Date,
   },
 
+  export_hsn_codes: {
+    type: [String],
+  },
+
+  export_hsn_codes_valid_upto: {
+    type: Date,
+  },
+
   buyer_sub:{
     type: Number,
     default: 0,

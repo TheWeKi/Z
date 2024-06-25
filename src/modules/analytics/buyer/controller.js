@@ -6,6 +6,7 @@ import { insertImportData } from './utils/insertImportData.js';
 import fs from 'fs';
 import { Buyer } from './buyer.model.js';
 import { Customer } from '../../user/customer.model.js';
+import { isValidObjectId } from 'mongoose';
 
 export async function uploadImportData(req, res) {
   try {
@@ -44,13 +45,13 @@ export async function fetchBuyerData(req, res) {
     const page_index = req.body.page_index;
     const page_size = req.body.page_size;
     const skip = (page_index - 1) * page_size;
-    if(!search){
+    if (!search) {
       return HttpResponse(res, 400, 'Search is required', {});
     }
-    if(!page_index){
+    if (!page_index) {
       return HttpResponse(res, 400, 'Page Index is required', {});
     }
-    if(!page_size){
+    if (!page_size) {
       return HttpResponse(res, 400, 'Page Size is required', {});
     }
 
@@ -58,11 +59,22 @@ export async function fetchBuyerData(req, res) {
     const result = await Buyer.find({ Company_Name: { $regex: search, $options: 'i' } }).select("Company_Name Country").skip(skip).limit(page_size);
     const totalCount = await Buyer.countDocuments({ Company_Name: { $regex: search, $options: 'i' } });
 
-    const response = {
-        data: result,
-        totalDocuments: totalCount,
-        };
+    // const response = {
+    //     data: result,
+    //     totalDocuments: totalCount,
+    //     };
 
+
+    const response = {
+      searchResult: result,
+
+      pagination: {
+        "page_index": page_index,
+        "page_size": page_size,
+        "total_pages": Math.ceil(totalCount / page_size),
+        "total_records": totalCount
+      }
+    };
 
     return HttpResponse(res, 200, 'records fetched successfully', response);
   } catch (error) {
@@ -80,34 +92,38 @@ export async function fetchBuyerData(req, res) {
 
 
 export async function fetchBuyerDetails(req, res) {
-    try {
-        const id = req.params.id;
-        const userId = req.user.id;
+  try {
+    const id = req.params.id;
+    const userId = req.user.id;
 
-        const user = await Customer.findById(userId);
+    if (!id || isValidObjectId(id) === false) {
+      return HttpException(res, 400, 'Invalid ID', {});
+    }
 
-        
-        if (!user) {
-            return HttpResponse(res, 404, 'User Not found', {});
-        }
+    const user = await Customer.findById(userId);
 
-        
 
-        if(!(user.buyer_sub>0)){
-            return HttpResponse(res, 403, 'Forbidden', {});
-        }
-        if(user.buyer_sub_valid_upto < new Date()){
-            return HttpResponse(res, 403, 'Subscription Expired', {});
-        }
-        const data = await Buyer.findById(id);
-        if (!data) {
-            return HttpResponse(res, 404, 'Data Not found', {});
-        }
-        user.buyer_sub = user.buyer_sub - 1;
-        await user.save();
-        return HttpResponse(res, 200, 'Data fetched successfully', data);
+    if (!user) {
+      return HttpResponse(res, 404, 'User Not found', {});
+    }
 
-    }catch(error){
-            return HttpException(res, error);
-        }
+
+
+    if (!(user.buyer_sub > 0)) {
+      return HttpResponse(res, 403, 'Forbidden', {});
+    }
+    if (user.buyer_sub_valid_upto < new Date()) {
+      return HttpResponse(res, 403, 'Subscription Expired', {});
+    }
+    const data = await Buyer.findById(id);
+    if (!data) {
+      return HttpResponse(res, 404, 'Data Not found', {});
+    }
+    user.buyer_sub = user.buyer_sub - 1;
+    await user.save();
+    return HttpResponse(res, 200, 'Data fetched successfully', data);
+
+  } catch (error) {
+    return HttpException(res, error);
+  }
 }

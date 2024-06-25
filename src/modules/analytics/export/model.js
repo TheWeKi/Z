@@ -37,7 +37,7 @@ export const search_import = Joi.object({
 });
 
 function isSubscribedHSCode(customer, hs_code) {
-  for (let code of customer.hsn_codes) {
+  for (let code of customer.export_hsn_codes) {
     if (hs_code.startsWith(code)) {
       return true;
     }
@@ -78,11 +78,11 @@ export async function isHSAuth(req, res, next) {
     if (!customer) return HttpException(res, 404, 'User not found');
 
     if (
-      !( customer.hsn_codes &&
-      customer.hsn_codes.length > 0 &&
-      // customer.hsn_codes.includes(validated_req.search_text.hs_code) &&
+      !( customer.export_hsn_codes &&
+      customer.export_hsn_codes.length > 0 &&
+      // customer.export_hsn_codes.includes(validated_req.search_text.hs_code) &&
       isSubscribedHSCode(customer, validated_req.search_text.hs_code) &&
-      new Date(customer.hsn_codes_valid_upto) >= new Date() )
+      new Date(customer.export_hsn_codes_valid_upto) >= new Date() )
     ) return next();
 
     const searchResult = await fetchImportData(validated_req, true);
