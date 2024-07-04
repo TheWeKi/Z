@@ -77,6 +77,12 @@ export async function updateCustomer(customer) {
   if (customer.buyer_sub_valid_upto)
     existingCustomer.buyer_sub_valid_upto = new Date(customer.buyer_sub_valid_upto);
 
+  if(customer.download_export_sub)
+    existingCustomer.download_export_sub = customer.download_export_sub;
+
+  if(customer.download_import_sub)
+    existingCustomer.download_import_sub = customer.download_import_sub;
+
   const newCustomer = await existingCustomer.save();
   return newCustomer;
 }

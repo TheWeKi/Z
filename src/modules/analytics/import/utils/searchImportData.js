@@ -36,6 +36,7 @@ export const fetchImportData = async (validated_req, all) => {
     // if(query.HS_Code && query.Item_Description) {
     //     delete query.Item_Description;
     // }
+    const total_records = await Import.countDocuments(query);
 
     searchResult = await Import.find(query).skip(skip).limit(parseInt(page_size));
 
@@ -45,8 +46,6 @@ export const fetchImportData = async (validated_req, all) => {
             return { Item_Description, HS_Code, Quantity, UQC, Country, Date };
         });
     }
-
-    const total_records = await Import.countDocuments(query);
 
     return {
         searchResult, 

@@ -42,9 +42,9 @@ export async function uploadImportData(req, res) {
 // buyer name -> Importer name
 // supplier name -> Supplier name
 // code port -> Indian port
-// unit 0-> UQC  
+// unit -> UQC
 
-// produt name -> item description
+// product name -> item description
 // country -> Country
 
 

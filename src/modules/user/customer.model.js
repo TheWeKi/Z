@@ -68,6 +68,16 @@ const CustomerSchema = new mongoose.Schema({
     type: Date,
   },
 
+  download_export_sub: {
+    type: Number,
+    default: 0,
+  },
+
+  download_import_sub: {
+      type: Number,
+      default: 0,
+  },
+
   createdAt: {
     type: Date,
   },
