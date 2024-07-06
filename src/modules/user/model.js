@@ -1,6 +1,7 @@
 import { Customer } from './customer.model.js';
 import { Admin } from './admin.model.js';
 import { HttpException } from '../../handlers/HttpException.js';
+import {encryptPassword} from "../../utilities/crypto.js";
 
 export async function createAdmin(admin) {
   console.log('creating admin', admin);
@@ -43,6 +44,15 @@ export async function createCustomer(customer) {
 }
 
 export async function updateCustomer(customer) {
+
+    console.log('updating customer', customer);
+
+    const result = await Customer.findByIdAndUpdate(customer.id, customer, { new: true });
+
+    return result;
+}
+
+export async function updateCustomerAsAdmin(customer) {
   // if (customer.hsn_codes)
   //   customer.hsn_codes = JSON.stringify(customer.hsn_codes);
   console.log('updating customer', customer);
@@ -82,6 +92,19 @@ export async function updateCustomer(customer) {
 
   if(customer.download_import_sub)
     existingCustomer.download_import_sub = customer.download_import_sub;
+
+  if (customer.password)
+    existingCustomer.password = await encryptPassword(customer.password);
+  if (customer.full_name)
+    existingCustomer.full_name = customer.full_name;
+  if (customer.phone)
+    existingCustomer.phone = customer.phone;
+  if (customer.company_name)
+    existingCustomer.company_name = customer.company_name;
+  if (customer.address)
+    existingCustomer.address = customer.address;
+  if (customer.designation)
+    existingCustomer.designation = customer.designation;
 
   const newCustomer = await existingCustomer.save();
   return newCustomer;

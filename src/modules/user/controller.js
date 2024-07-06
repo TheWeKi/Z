@@ -20,6 +20,7 @@ import signToken from '../../utilities/jwt/sign_token.js';
 import refreshToken from '../../utilities/jwt/refresh_token.js';
 import moment from 'moment';
 import nodemailer from 'nodemailer';
+import {Admin} from "./admin.model.js";
 //ok tested
 export async function createAdmin(req, res) {
   try {
@@ -27,6 +28,7 @@ export async function createAdmin(req, res) {
     if (validation.error)
       return HttpException(res, 400, validation.error.details[0].message, {});
     const validated_req = validation.value;
+
     validated_req.password = await encryptPassword(validated_req.password);
     const admin = await models.createAdmin(validated_req);
     admin.password = undefined;
@@ -47,12 +49,11 @@ export async function updateAdmin(req, res) {
     if (!admin) {
       return HttpException(res, 400, 'Admin not found', {});
     }
-    validated_req.password = await encryptPassword(validated_req.password);
-    await models.updateAdmin({
-      id: req.user.id,
-      password: validated_req.password,
-    });
-    return HttpResponse(res, 200, 'Admin Updated', {});
+    validated_req.id = req.user.id;
+    if(validated_req.password)
+      validated_req.password = await encryptPassword(validated_req.password);
+    const result = await models.updateAdmin(validated_req);
+    return HttpResponse(res, 200, 'Admin Updated', {admin: result});
   } catch (error) {
     return InternalServerException(res, error);
   }
@@ -115,7 +116,7 @@ export async function updateCustomerAsAdmin(req, res) {
       return HttpException(res, 400, validation.error.details[0].message, {});
     const validated_req = validation.value;
     
-    const customer = await models.updateCustomer(validated_req);
+    const customer = await models.updateCustomerAsAdmin(validated_req);
     customer.password = undefined;
     return HttpResponse(res, 200, 'Customer Updated', { customer });
   } catch (error) {
@@ -152,6 +153,10 @@ export async function createCustomer(req, res) {
     if (validation.error)
       return HttpException(res, 400, validation.error.details[0].message, {});
     const validated_req = validation.value;
+    const customer_exists = await models.readCustomerByEmail(validated_req.email);
+    if (customer_exists) {
+        return HttpException(res, 400, 'Customer already exists', {});
+    }
     if (validated_req.password) {
       validated_req.password = await encryptPassword(validated_req.password);
     }
@@ -163,6 +168,7 @@ export async function createCustomer(req, res) {
     return InternalServerException(res, error);
   }
 }
+
 //okk tested
 export async function updateCustomer(req, res) {
   try {

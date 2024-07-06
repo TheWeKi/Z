@@ -103,10 +103,10 @@ export async function fetchBuyerDetails(req, res) {
         
 
         if(!(user.supplier_sub>0)){
-            return HttpResponse(res, 403, 'Forbidden', {});
+            return HttpResponse(res, 400, `You don't have enough subscription. Please connect to support`, {});
         }
         if(user.supplier_sub_valid_upto < new Date()){
-            return HttpResponse(res, 403, 'Subscription Expired', {});
+            return HttpResponse(res, 400, 'Subscription Expired. Please connect to support', {});
         }
         let data;
         

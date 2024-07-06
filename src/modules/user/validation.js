@@ -8,7 +8,9 @@ export const create_admin = Joi.object({
 });
 
 export const update_admin = Joi.object({
-  password: Joi.string().min(3).max(70).required(),
+  password: Joi.string().min(3).max(70),
+  full_name: Joi.string().min(5).max(70).trim(),
+  phone: Joi.string().min(2).max(25).trim(),
 });
 
 export const email_validate = Joi.object({
@@ -38,7 +40,7 @@ export const create_customer = Joi.object({
   // hsn_codes_valid_upto: Joi.date().greater('now').required(),
 });
 export const update_customer = Joi.object({
-  email: Joi.string().email({minDomainSegments: 2}),
+  // email: Joi.string().email({minDomainSegments: 2}),
   password: Joi.string().min(1).max(70),
   full_name: Joi.string().min(1).max(70).trim(),
   phone: Joi.string().min(1).max(25),
@@ -51,6 +53,7 @@ export const update_customer = Joi.object({
 
 export const update_customer_as_admin = Joi.object({
   id: Joi.string().required(),
+
   hsn_codes: Joi.array().items(Joi.string().min(1).max(70).trim()).min(1),
   hsn_codes_valid_upto: Joi.date().greater('now'),
   export_hsn_codes: Joi.array().items(Joi.string().min(1).max(70).trim()).min(1),
@@ -59,4 +62,13 @@ export const update_customer_as_admin = Joi.object({
   buyer_sub_valid_upto: Joi.date().greater('now'),
   supplier_sub: Joi.number().min(1),
   supplier_sub_valid_upto: Joi.date().greater('now'),
+  download_import_sub: Joi.number(),
+    download_export_sub: Joi.number(),
+
+  password: Joi.string().min(1).max(70),
+  full_name: Joi.string().min(1).max(70).trim(),
+  phone: Joi.string().min(1).max(25),
+  company_name: Joi.string().min(1).max(70).trim(),
+  address: Joi.string().min(1).max(70).trim(),
+  designation: Joi.string().min(1).max(70).trim(),
 });

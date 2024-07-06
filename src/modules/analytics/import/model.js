@@ -94,7 +94,7 @@ export async function isHSAuth(req, res, next) {
 
     if(validated_req.download_sub) {
       if(customer.download_import_sub < 1) {
-        return HttpException(res, 402, 'Download Subscription Expired');
+        return HttpException(res, 400, 'Download Subscription Expired');
       }
 
       const { search_text, pagination, filters, duration } = validated_req;
@@ -124,7 +124,7 @@ export async function isHSAuth(req, res, next) {
       const total_records = await Import.countDocuments(query);
 
       if (total_records > customer.download_import_sub) {
-        return HttpException(res, 402, 'Download Subscription Not Enough');
+        return HttpException(res, 400, 'Download Subscription Not Enough');
       }
 
       const skip = (page_index - 1) * page_size;

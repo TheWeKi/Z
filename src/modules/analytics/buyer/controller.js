@@ -110,10 +110,10 @@ export async function fetchBuyerDetails(req, res) {
 
 
     if (!(user.buyer_sub > 0)) {
-      return HttpResponse(res, 403, 'Forbidden', {});
+      return HttpResponse(res, 400, 'Subscription Expired. Please connect to support', {});
     }
     if (user.buyer_sub_valid_upto < new Date()) {
-      return HttpResponse(res, 403, 'Subscription Expired', {});
+      return HttpResponse(res, 400, 'Subscription Expired. Please connect to support', {});
     }
     const data = await Buyer.findById(id);
     if (!data) {
