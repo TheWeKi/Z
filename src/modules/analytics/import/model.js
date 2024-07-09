@@ -75,7 +75,7 @@ export async function isHSAuth(req, res, next) {
     try {
       decodedToken = jwt.verify(token, process.env.JWT_ACCESS_PRIVATE_KEY);
     } catch (error) {
-      return HttpException(res, 401, 'Invalid Token');
+      return new HttpException(res, 401, 'Invalid Token');
     }
 
     if (decodedToken.user_type !== 'customer') return HttpException(res, 401, 'Invalid Token');

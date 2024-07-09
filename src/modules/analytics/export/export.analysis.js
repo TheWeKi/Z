@@ -126,18 +126,15 @@ const detailAnalysis = async (req, res) => {
 
     const query = generateQuery(validated_req);
 
-    try {
-        const uniqueCountryMatch = { Country: { $exists: true } };
-        const uniqueBuyerMatch = { Buyer_Name: { $exists: true } };
-        const uniqueExporterMatch = { Exporter_Name: { $exists: true } };
-        const uniquePortOfLoadingMatch = { Port_of_Loading: { $exists: true } };
-        const uniquePortOfDischargeMatch = { Port_of_Discharge: { $exists: true } };
+    const {
+        countryPipeline,
+        buyerPipeline,
+        exporterPipeline,
+        portOfLoadingPipeline,
+        portOfDischargePipeline
+    } = getDetailAnalysisDataPipelines(query, generatePipeline);
 
-        const countryPipeline = generatePipeline('Country', query, uniqueCountryMatch);
-        const buyerPipeline = generatePipeline('Buyer_Name', query, uniqueBuyerMatch);
-        const exporterPipeline = generatePipeline('Exporter_Name', query, uniqueExporterMatch);
-        const portOfLoadingPipeline = generatePipeline('Port_of_Loading', query, uniquePortOfLoadingMatch);
-        const portOfDischargePipeline = generatePipeline('Port_of_Discharge', query, uniquePortOfDischargeMatch);
+    try {
 
         const countries = await Import.aggregate(countryPipeline);
         const buyers = await Import.aggregate(buyerPipeline);
@@ -152,4 +149,86 @@ const detailAnalysis = async (req, res) => {
     }
 }
 
-export { sortAnalysis, detailAnalysis };
+function generateUSDPipeline(field, query, uniqueMatch) {
+    return  [
+        {
+            $match: { $and: [query, uniqueMatch] }, // Filter documents that match the combined criteria
+        },
+        {
+            $group: {
+                _id: `$${field}`, // Group by the "country" field
+                total_value: { $sum: '$Total_Value_USD' }, // Count the number of documents in each group
+            },
+        },
+        {
+            $project: {
+                _id: 0, // Exclude the original "_id" field from the output
+                data: "$_id", // Rename the group's "_id" field to "country"
+                total_value: 1, // Keep the count field
+            },
+        },
+        {
+            $sort: { total_value: -1 },
+        }
+    ];
+}
+
+const detailAnalysisUSD = async (req, res) => {
+    const validation = search_import.validate(req.body);
+    if (validation.error)
+        return HttpException(
+            res,
+            400,
+            validation.error.details[0].message,
+            {}
+        );
+    const validated_req = validation.value;
+
+    const query = generateQuery(validated_req);
+
+    const {
+        countryPipeline,
+        buyerPipeline,
+        exporterPipeline,
+        portOfLoadingPipeline,
+        portOfDischargePipeline
+    } = getDetailAnalysisDataPipelines(query, generateUSDPipeline);
+
+    try {
+
+        const countries = await Import.aggregate(countryPipeline);
+        const buyers = await Import.aggregate(buyerPipeline);
+        const exporters = await Import.aggregate(exporterPipeline);
+        const portOfLoading = await Import.aggregate(portOfLoadingPipeline);
+        const portOfDischarge = await Import.aggregate(portOfDischargePipeline);
+
+        res.json({ countries, buyers, exporters, portOfLoading, portOfDischarge });
+
+    } catch (error) {
+        res.status(404).json({ message: error.message });
+    }
+}
+
+function getDetailAnalysisDataPipelines(query, pipelineGenerator) {
+    const uniqueCountryMatch = { Country: { $exists: true } };
+    const uniqueBuyerMatch = { Buyer_Name: { $exists: true } };
+    const uniqueExporterMatch = { Exporter_Name: { $exists: true } };
+    const uniquePortOfLoadingMatch = { Port_of_Loading: { $exists: true } };
+    const uniquePortOfDischargeMatch = { Port_of_Discharge: { $exists: true } };
+
+    const countryPipeline = pipelineGenerator('Country', query, uniqueCountryMatch);
+    const buyerPipeline = pipelineGenerator('Buyer_Name', query, uniqueBuyerMatch);
+    const exporterPipeline = pipelineGenerator('Exporter_Name', query, uniqueExporterMatch);
+    const portOfLoadingPipeline = pipelineGenerator('Port_of_Loading', query, uniquePortOfLoadingMatch);
+    const portOfDischargePipeline = pipelineGenerator('Port_of_Discharge', query, uniquePortOfDischargeMatch);
+
+    return {
+        countryPipeline,
+        buyerPipeline,
+        exporterPipeline,
+        portOfLoadingPipeline,
+        portOfDischargePipeline
+    }
+}
+
+export { sortAnalysis, detailAnalysis, detailAnalysisUSD };

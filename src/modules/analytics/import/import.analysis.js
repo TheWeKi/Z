@@ -1,6 +1,8 @@
 import { Import } from './import.model.js';
 import {HttpException} from "../../../handlers/HttpException.js";
 import {search_import} from "./model.js";
+import jwt from "jsonwebtoken";
+import {Customer} from "../../user/customer.model.js";
 
 function escapeRegExp(string) {
     return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); // $& means the whole matched string
@@ -35,6 +37,33 @@ const generateQuery = (validated_req) => {
 }
 
 const sortAnalysis = async (req, res) => {
+
+    /** Is Authorized & Has Subscription **
+    const authHeader = req.headers['authorization'];
+    const token = authHeader && authHeader.split(' ')[1];
+
+    if (!token) return new HttpException(res, 401, 'Invalid Token');
+
+    let decodedToken;
+    try {
+        decodedToken = jwt.verify(token, process.env.JWT_ACCESS_PRIVATE_KEY);
+    } catch (error) {
+        return new HttpException(res, 401, 'Invalid Token');
+    }
+
+    if (decodedToken.user_type !== 'customer') return HttpException(res, 401, 'Invalid Token');
+    const customer = await Customer.findById(decodedToken.id).select('-password');
+
+    if (!customer) return HttpException(res, 404, 'User not found');
+
+    if (
+        !( customer.hsn_codes &&
+            customer.hsn_codes.length > 0 &&
+            // customer.hsn_codes.includes(validated_req.search_text.hs_code) &&
+            isSubscribedHSCode(customer, validated_req.search_text.hs_code) &&
+            new Date(customer.hsn_codes_valid_upto) >= new Date() )
+    ) return new HttpException(res, 400, "Invalid Subscription");
+    ******************/
 
     const validation = search_import.validate(req.body);
     if (validation.error)
@@ -124,18 +153,15 @@ const detailAnalysis = async (req, res) => {
 
     const query = generateQuery(validated_req);
 
-    try {
-        const uniqueCountryMatch = { Country: { $exists: true } };
-        const uniqueImporterMatch = { Importer_Name: { $exists: true } };
-        const uniquePortMatch = { Indian_Port: { $exists: true } };
-        const uniquePortShipmentMatch = { Port_Of_Shipment: { $exists: true } };
-        const uniqueSupplierMatch = { Supplier_Name: { $exists: true } };
+    const {
+        countries_pipeline,
+        importers_pipeline,
+        ports_pipeline,
+        portShipment_pipeline,
+        supplier_pipeline
+    } = getDetailAnalysisDataPipelines(query, generatePipeline);
 
-        const importers_pipeline = generatePipeline('Importer_Name', query, uniqueImporterMatch);
-        const countries_pipeline = generatePipeline('Country', query, uniqueCountryMatch);
-        const ports_pipeline = generatePipeline('Indian_Port', query, uniquePortMatch);
-        const portShipment_pipeline = generatePipeline('Port_Of_Shipment', query, uniquePortShipmentMatch);
-        const supplier_pipeline = generatePipeline('Supplier_Name', query, uniqueSupplierMatch);
+    try {
 
         const importers = await Import.aggregate(importers_pipeline);
         const countries = await Import.aggregate(countries_pipeline);
@@ -155,4 +181,100 @@ const detailAnalysis = async (req, res) => {
     }
 }
 
-export { sortAnalysis, detailAnalysis };
+const detailAnalysisUSD = async (req, res) => {
+    const validation = search_import.validate(req.body);
+    if (validation.error)
+        return HttpException(
+            res,
+            400,
+            validation.error.details[0].message,
+            {}
+        );
+    const validated_req = validation.value;
+
+    const query = generateQuery(validated_req);
+
+    const {
+        countries_pipeline,
+        importers_pipeline,
+        ports_pipeline,
+        portShipment_pipeline,
+        supplier_pipeline
+    } = getDetailAnalysisDataPipelines(query, generateUSDPipeline);
+
+    try {
+        const importers = await Import.aggregate(importers_pipeline);
+        const countries = await Import.aggregate(countries_pipeline);
+        const ports = await Import.aggregate(ports_pipeline);
+        const portShipment = await Import.aggregate(portShipment_pipeline);
+        const suppliers = await Import.aggregate(supplier_pipeline);
+
+        res.status(200).json({
+            Importers: importers,
+            Countries: countries,
+            Ports: ports,
+            Suppliers: suppliers,
+            Port_Of_Shipment: portShipment
+        });
+    } catch (error) {
+        res.status(404).json({ message: error.message });
+    }
+
+}
+
+function generateUSDPipeline(field, query, uniqueMatch) {
+    return  [
+        {
+            $match: { $and: [query, uniqueMatch] }, // Filter documents that match the combined criteria
+        },
+        {
+            $group: {
+                _id: `$${field}`, // Group by the "country" field
+                total_value: { $sum: '$Total_Value_USD' }, // Count the number of documents in each group
+            },
+        },
+        {
+            $project: {
+                _id: 0, // Exclude the original "_id" field from the output
+                data: "$_id", // Rename the group's "_id" field to "country"
+                total_value: 1, // Keep the count field
+            },
+        },
+        {
+            $sort: { total_value: -1 },
+        }
+    ];
+}
+
+function getDetailAnalysisDataPipelines(query, pipelineGenerator) {
+    const uniqueCountryMatch = { Country: { $exists: true } };
+    const uniqueImporterMatch = { Importer_Name: { $exists: true } };
+    const uniquePortMatch = { Indian_Port: { $exists: true } };
+    const uniquePortShipmentMatch = { Port_Of_Shipment: { $exists: true } };
+    const uniqueSupplierMatch = { Supplier_Name: { $exists: true } };
+
+    const importers_pipeline = pipelineGenerator('Importer_Name', query, uniqueImporterMatch);
+    const countries_pipeline = pipelineGenerator('Country', query, uniqueCountryMatch);
+    const ports_pipeline = pipelineGenerator('Indian_Port', query, uniquePortMatch);
+    const portShipment_pipeline = pipelineGenerator('Port_Of_Shipment', query, uniquePortShipmentMatch);
+    const supplier_pipeline = pipelineGenerator('Supplier_Name', query, uniqueSupplierMatch);
+
+    return {
+        importers_pipeline,
+        countries_pipeline,
+        ports_pipeline,
+        portShipment_pipeline,
+        supplier_pipeline
+    }
+}
+
+function isSubscribedHSCode(customer, hs_code) {
+    for (let code of customer.hsn_codes) {
+        if (hs_code.startsWith(code)) {
+            return true;
+        }
+    }
+    return false;
+}
+
+export { sortAnalysis, detailAnalysis, detailAnalysisUSD };
