@@ -1,7 +1,7 @@
 import { Import } from './import.model.js';
 import {HttpException} from "../../../handlers/HttpException.js";
 import {search_import} from "./model.js";
-
+import { Customer } from '../../user/customer.model.js';
 function escapeRegExp(string) {
     return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); // $& means the whole matched string
 }
@@ -45,6 +45,9 @@ const sortAnalysis = async (req, res) => {
             {}
         );
     const validated_req = validation.value;
+
+    const subscription = await checkSubscription(req.user.id, validated_req);
+    if (!subscription) return new HttpException(res, 400, "Invalid Subscription");
 
     const query = generateQuery(validated_req);
 
@@ -124,6 +127,9 @@ const detailAnalysis = async (req, res) => {
         );
     const validated_req = validation.value;
 
+    const subscription = await checkSubscription(req.user.id, validated_req);
+    if (!subscription) return new HttpException(res, 400, "Invalid Subscription");
+
     const query = generateQuery(validated_req);
 
     const {
@@ -184,6 +190,9 @@ const detailAnalysisUSD = async (req, res) => {
         );
     const validated_req = validation.value;
 
+    const subscription = await checkSubscription(req.user.id, validated_req);
+    if (!subscription) return new HttpException(res, 400, "Invalid Subscription");
+
     const query = generateQuery(validated_req);
 
     const {
@@ -230,5 +239,31 @@ function getDetailAnalysisDataPipelines(query, pipelineGenerator) {
         portOfDischargePipeline
     }
 }
+
+async function checkSubscription(id, validated_req) {
+    const customer= await Customer.findOne({_id:id});
+    console.log(customer);
+    if (!customer) return new HttpException(res, 404, 'User not found');
+
+    if (
+        !( customer.export_hsn_codes &&
+        customer.export_hsn_codes.length > 0 &&
+        // customer.hsn_codes.includes(validated_req.search_text.hs_code) &&
+        isSubscribedHSCode(customer, validated_req.search_text.hs_code) &&
+        new Date(customer.export_hsn_codes_valid_upto) >= new Date() )
+      ) return false;
+
+      return true;
+}
+
+function isSubscribedHSCode(customer, hs_code) {
+    for (let code of customer.export_hsn_codes) {
+        if (hs_code.startsWith(code)) {
+            return true;
+        }
+    }
+    return false;
+}
+
 
 export { sortAnalysis, detailAnalysis, detailAnalysisUSD };

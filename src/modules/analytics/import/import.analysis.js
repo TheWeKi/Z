@@ -75,6 +75,9 @@ const sortAnalysis = async (req, res) => {
         );
     const validated_req = validation.value;
 
+    const subscription = await checkSubscription(req.user.id, validated_req);
+    if (!subscription) return new HttpException(res, 400, "Invalid Subscription");
+
     const query = generateQuery(validated_req);
 
     try {
@@ -140,6 +143,22 @@ function generatePipeline(field, query, uniqueMatch) {
     ];
 }
 
+async function checkSubscription(id, validated_req) {
+    const customer= await Customer.findOne({_id:id});
+    console.log(customer);
+    if (!customer) return new HttpException(res, 404, 'User not found');
+
+    if (
+        !( customer.hsn_codes &&
+        customer.hsn_codes.length > 0 &&
+        // customer.hsn_codes.includes(validated_req.search_text.hs_code) &&
+        isSubscribedHSCode(customer, validated_req.search_text.hs_code) &&
+        new Date(customer.hsn_codes_valid_upto) >= new Date() )
+      ) return false;
+
+      return true;
+}
+
 const detailAnalysis = async (req, res) => {
     const validation = search_import.validate(req.body);
     if (validation.error)
@@ -150,6 +169,10 @@ const detailAnalysis = async (req, res) => {
             {}
         );
     const validated_req = validation.value;
+
+    const subscription = await checkSubscription(req.user.id, validated_req);
+    if (!subscription) return new HttpException(res, 400, "Invalid Subscription");
+
 
     const query = generateQuery(validated_req);
 
@@ -191,6 +214,9 @@ const detailAnalysisUSD = async (req, res) => {
             {}
         );
     const validated_req = validation.value;
+
+    const subscription = await checkSubscription(req.user.id, validated_req);
+    if (!subscription) return new HttpException(res, 400, "Invalid Subscription");
 
     const query = generateQuery(validated_req);
 
