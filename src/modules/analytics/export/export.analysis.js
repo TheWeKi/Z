@@ -71,10 +71,10 @@ const sortAnalysis = async (req, res) => {
                 $project: {
                     _id: 0,
                     Country: { $size: '$Country' },
-                    Exporter_Name: { $size: '$Exporter_Name' },
+                    Exporter: { $size: '$Exporter_Name' },
                     Port_of_Loading: { $size: '$Port_of_Loading' },
                     Port_of_Discharge: { $size: '$Port_of_Discharge' },
-                    Buyer_Name: { $size: '$Buyer_Name' },
+                    Importer: { $size: '$Buyer_Name' },
                     // Add more fields as needed
                 },
             }
@@ -83,7 +83,7 @@ const sortAnalysis = async (req, res) => {
         const data = await Import.aggregate(pipeline);
 
         const responseData = {
-            Total_Shipments: totalShipments,
+            Shipments: totalShipments,
             ...data[0]
         }
         res.status(200).json(responseData);
@@ -148,7 +148,13 @@ const detailAnalysis = async (req, res) => {
         const portOfLoading = await Import.aggregate(portOfLoadingPipeline);
         const portOfDischarge = await Import.aggregate(portOfDischargePipeline);
 
-        res.json({ countries, buyers, exporters, portOfLoading, portOfDischarge });
+        res.json({
+            Country: countries,
+            Importer: buyers,
+            Exporter: exporters,
+            Port_of_Loading: portOfLoading,
+            Port_of_Discharge: portOfDischarge
+        });
 
     } catch (error) {
         res.status(404).json({ message: error.message });
@@ -211,7 +217,13 @@ const detailAnalysisUSD = async (req, res) => {
         const portOfLoading = await Import.aggregate(portOfLoadingPipeline);
         const portOfDischarge = await Import.aggregate(portOfDischargePipeline);
 
-        res.json({ countries, buyers, exporters, portOfLoading, portOfDischarge });
+        res.json({
+            Country: countries,
+            Importer: buyers,
+            Exporter: exporters,
+            Port_of_Loading: portOfLoading,
+            Port_of_Discharge: portOfDischarge
+        });
 
     } catch (error) {
         res.status(404).json({ message: error.message });
