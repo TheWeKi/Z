@@ -38,33 +38,6 @@ const generateQuery = (validated_req) => {
 
 const sortAnalysis = async (req, res) => {
 
-    /** Is Authorized & Has Subscription **
-    const authHeader = req.headers['authorization'];
-    const token = authHeader && authHeader.split(' ')[1];
-
-    if (!token) return new HttpException(res, 401, 'Invalid Token');
-
-    let decodedToken;
-    try {
-        decodedToken = jwt.verify(token, process.env.JWT_ACCESS_PRIVATE_KEY);
-    } catch (error) {
-        return new HttpException(res, 401, 'Invalid Token');
-    }
-
-    if (decodedToken.user_type !== 'customer') return HttpException(res, 401, 'Invalid Token');
-    const customer = await Customer.findById(decodedToken.id).select('-password');
-
-    if (!customer) return HttpException(res, 404, 'User not found');
-
-    if (
-        !( customer.hsn_codes &&
-            customer.hsn_codes.length > 0 &&
-            // customer.hsn_codes.includes(validated_req.search_text.hs_code) &&
-            isSubscribedHSCode(customer, validated_req.search_text.hs_code) &&
-            new Date(customer.hsn_codes_valid_upto) >= new Date() )
-    ) return new HttpException(res, 400, "Invalid Subscription");
-    ******************/
-
     const validation = search_import.validate(req.body);
     if (validation.error)
         return HttpException(
@@ -92,6 +65,7 @@ const sortAnalysis = async (req, res) => {
                         Importer_Name: { $addToSet: '$Importer_Name' },
                         Port_Of_Shipment: { $addToSet: '$Port_Of_Shipment'},
                         Indian_Port: { $addToSet: '$Indian_Port'},
+                        Supplier_Name: { $addToSet: '$Supplier_Name'}
                         // Add more fields as needed
                     },
                 },
@@ -102,6 +76,7 @@ const sortAnalysis = async (req, res) => {
                         Importer_Name: { $size: '$Importer_Name' },
                         Port_Of_Shipment: { $size: '$Port_Of_Shipment'},
                         Indian_Port: { $size: '$Indian_Port'},
+                        Exporter_Name: { $size: '$Supplier_Name'}
                         // Add more fields as needed
                     },
                 }
@@ -256,18 +231,18 @@ function generateUSDPipeline(field, query, uniqueMatch) {
         {
             $group: {
                 _id: `$${field}`, // Group by the "country" field
-                total_value: { $sum: '$Total_Value_USD' }, // Count the number of documents in each group
+                count: { $sum: '$Total_Value_USD' }, // Count the number of documents in each group
             },
         },
         {
             $project: {
                 _id: 0, // Exclude the original "_id" field from the output
                 data: "$_id", // Rename the group's "_id" field to "country"
-                total_value: 1, // Keep the count field
+                count: 1, // Keep the count field
             },
         },
         {
-            $sort: { total_value: -1 },
+            $sort: { count: -1 },
         }
     ];
 }

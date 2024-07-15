@@ -163,18 +163,18 @@ function generateUSDPipeline(field, query, uniqueMatch) {
         {
             $group: {
                 _id: `$${field}`, // Group by the "country" field
-                total_value: { $sum: '$Total_Value_USD' }, // Count the number of documents in each group
+                count: { $sum: '$Total_Value_USD' }, // Count the number of documents in each group
             },
         },
         {
             $project: {
                 _id: 0, // Exclude the original "_id" field from the output
                 data: "$_id", // Rename the group's "_id" field to "country"
-                total_value: 1, // Keep the count field
+                count: 1, // Keep the count field
             },
         },
         {
-            $sort: { total_value: -1 },
+            $sort: { count: -1 },
         }
     ];
 }
