@@ -38,23 +38,14 @@ export async function uploadImportData(req, res) {
   }
 }
 
-
-// buyer name -> Importer name
-// supplier name -> Supplier name
-// code port -> Indian port
-// unit -> UQC
-
-// product name -> item description
-// country -> Country
-
-
 export async function searchImportData(req, res) {
   try {
     const validated_req = req.validated_req;
 
-    const searchResult = await fetchImportData(validated_req, false);
+    const searchResult = await fetchImportData(validated_req, true);
+    searchResult.subscription = true;
 
-    return HttpResponse(res, 200, 'records fetched successfully', searchResult);
+    return HttpResponse(res, 200, `records fetched successfully`, searchResult);
   } catch (error) {
     return InternalServerException(res, error);
   }

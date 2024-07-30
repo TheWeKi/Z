@@ -49,7 +49,7 @@ const sortAnalysis = async (req, res) => {
     const validated_req = validation.value;
 
     const subscription = await checkSubscription(res,req.user.id, validated_req);
-    if (!subscription) return new HttpException(res, 400, "Invalid Subscription");
+    if (!subscription) return HttpException(res, 400, "Invalid Subscription");
 
     const query = generateQuery(validated_req);
     console.log(query);
@@ -146,7 +146,7 @@ const detailAnalysis = async (req, res) => {
     const validated_req = validation.value;
 
     const subscription = await checkSubscription(res,req.user.id, validated_req);
-    if (!subscription) return new HttpException(res, 400, "Invalid Subscription");
+    if (!subscription) return HttpException(res, 400, "Invalid Subscription");
 
     
     const query = generateQuery(validated_req);
@@ -234,7 +234,7 @@ const detailAnalysisUSD = async (req, res) => {
     const validated_req = validation.value;
 
     const subscription = await checkSubscription(res, req.user.id, validated_req);
-    if (!subscription) return new HttpException(res, 400, "Invalid Subscription");
+    if (!subscription) return HttpException(res, 400, "Invalid Subscription");
 
     const query = generateQuery(validated_req);
 
