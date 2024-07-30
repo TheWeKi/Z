@@ -37,7 +37,7 @@ export const fetchImportData = async (validated_req, all) => {
     //     delete query.Item_Description;
     // }
 
-    searchResult = await Import.find(query).skip(skip).limit(parseInt(page_size));
+    searchResult = await Import.find(query).skip(skip).limit(parseInt(page_size)).lean();
 
     if(!all) {
         searchResult = searchResult.map((item) => {

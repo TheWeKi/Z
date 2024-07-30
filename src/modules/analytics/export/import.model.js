@@ -13,10 +13,13 @@ const importSchema = new mongoose.Schema({
     UQC: { type: String, default: null },
     Unit_Rate_In_FC: { type: Number, default: null },
     Currency: { type: String, default: null },
+    Unit_Price_in_INR: { type: Number, default: null },
+    Total_Value_in_INR: { type: Number, default: null },
     Unit_Value_USD: { type: Number, default: null },
     Total_Value_USD: { type: Number, default: null },
     Port_of_Discharge: { type: String, default: null },
     Country: { type: String, default: null },
+    Country_of_Origin: { type: String, default: null },
     Buyer_Name: { type: String, default: null },
     Buyer_Address: { type: String, default: null },
     IEC: { type: String, default: null },
@@ -29,7 +32,9 @@ const importSchema = new mongoose.Schema({
     Exporter_Contact_Person_1: { type: String, default: null },
     Exporter_Contact_Person_2: { type: String, default: null }
 },
-{timestamps: true}
+{timestamps: true},
+
 );
 
 export const Import = mongoose.model('Export', importSchema);
+

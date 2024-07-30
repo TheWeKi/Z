@@ -48,11 +48,11 @@ const sortAnalysis = async (req, res) => {
         );
     const validated_req = validation.value;
 
-    const subscription = await checkSubscription(req.user.id, validated_req);
+    const subscription = await checkSubscription(res,req.user.id, validated_req);
     if (!subscription) return new HttpException(res, 400, "Invalid Subscription");
 
     const query = generateQuery(validated_req);
-
+    console.log(query);
     try {
         const pipeline = [
                 {
@@ -118,10 +118,10 @@ function generatePipeline(field, query, uniqueMatch) {
     ];
 }
 
-async function checkSubscription(id, validated_req) {
+async function checkSubscription(res, id, validated_req) {
     const customer= await Customer.findOne({_id:id});
-    console.log(customer);
-    if (!customer) return new HttpException(res, 404, 'User not found');
+    console.log(" izm hedhjkshdkjahda ");
+    if (!customer) return false;
 
     if (
         !( customer.hsn_codes &&
@@ -145,35 +145,78 @@ const detailAnalysis = async (req, res) => {
         );
     const validated_req = validation.value;
 
-    const subscription = await checkSubscription(req.user.id, validated_req);
+    const subscription = await checkSubscription(res,req.user.id, validated_req);
     if (!subscription) return new HttpException(res, 400, "Invalid Subscription");
 
-
+    
     const query = generateQuery(validated_req);
 
-    const {
-        countries_pipeline,
-        importers_pipeline,
-        ports_pipeline,
-        portShipment_pipeline,
-        supplier_pipeline
-    } = getDetailAnalysisDataPipelines(query, generatePipeline);
+    const pipeline =[
+            {
+                $match: query, // Filter documents that match the query
+            },
+            {
+                $facet: {
+                    importers: [
+                        { $match: { Importer_Name: { $exists: true } } },
+                        { $group: { _id: "$Importer_Name", count: { $sum: 1 } } },
+                        { $project: { _id: 0, data: "$_id", count: 1 } },
+                        { $sort: { count: -1 } }
+                    ],
+                    countries: [
+                        { $match: { Country: { $exists: true } } },
+                        { $group: { _id: "$Country", count: { $sum: 1 } } },
+                        { $project: { _id: 0, data: "$_id", count: 1 } },
+                        { $sort: { count: -1 } }
+                    ],
+                    ports: [
+                        { $match: { Indian_Port: { $exists: true } } },
+                        { $group: { _id: "$Indian_Port", count: { $sum: 1 } } },
+                        { $project: { _id: 0, data: "$_id", count: 1 } },
+                        { $sort: { count: -1 } }
+                    ],
+                    portShipment: [
+                        { $match: { Port_Of_Shipment: { $exists: true } } },
+                        { $group: { _id: "$Port_Of_Shipment", count: { $sum: 1 } } },
+                        { $project: { _id: 0, data: "$_id", count: 1 } },
+                        { $sort: { count: -1 } }
+                    ],
+                    suppliers: [
+                        { $match: { Supplier_Name: { $exists: true } } },
+                        { $group: { _id: "$Supplier_Name", count: { $sum: 1 } } },
+                        { $project: { _id: 0, data: "$_id", count: 1 } },
+                        { $sort: { count: -1 } }
+                    ]
+                }
+            }
+        ];
+
+    // const {
+    //     countries_pipeline,
+    //     importers_pipeline,
+    //     ports_pipeline,
+    //     portShipment_pipeline,
+    //     supplier_pipeline
+    // } = getDetailAnalysisDataPipelines(query, generatePipeline);
 
     try {
 
-        const importers = await Import.aggregate(importers_pipeline);
-        const countries = await Import.aggregate(countries_pipeline);
-        const ports = await Import.aggregate(ports_pipeline);
-        const portShipment = await Import.aggregate(portShipment_pipeline);
-        const suppliers = await Import.aggregate(supplier_pipeline);
+        // const importers = await Import.aggregate(importers_pipeline);
+        // const countries = await Import.aggregate(countries_pipeline);
+        // const ports = await Import.aggregate(ports_pipeline);
+        // const portShipment = await Import.aggregate(portShipment_pipeline);
+        // const suppliers = await Import.aggregate(supplier_pipeline);
 
-        res.status(200).json({
-            Importer: importers,
-            Country: countries,
-            Port_Of_Loading: ports,
-            Exporter: suppliers,
-            Port_Of_Discharge: portShipment
-        });
+        // res.status(200).json({
+        //     Importer: importers,
+        //     Country: countries,
+        //     Port_of_Discharge: ports,
+        //     Exporter: suppliers,
+        //     Port_of_Loading: portShipment
+        // });
+
+        const data = await Import.aggregate(pipeline);
+        res.json(data[0]);
     } catch (error) {
         res.status(404).json({ message: error.message });
     }
@@ -190,7 +233,7 @@ const detailAnalysisUSD = async (req, res) => {
         );
     const validated_req = validation.value;
 
-    const subscription = await checkSubscription(req.user.id, validated_req);
+    const subscription = await checkSubscription(res, req.user.id, validated_req);
     if (!subscription) return new HttpException(res, 400, "Invalid Subscription");
 
     const query = generateQuery(validated_req);
@@ -213,9 +256,9 @@ const detailAnalysisUSD = async (req, res) => {
         res.status(200).json({
             Importer: importers,
             Country: countries,
-            Port_Of_Loading: ports,
+            Port_of_Discharge: ports,
             Exporter: suppliers,
-            Port_Of_Discharge: portShipment
+            Port_of_Loading: portShipment
         });
     } catch (error) {
         res.status(404).json({ message: error.message });

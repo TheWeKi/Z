@@ -21,6 +21,8 @@ import refreshToken from '../../utilities/jwt/refresh_token.js';
 import moment from 'moment';
 import nodemailer from 'nodemailer';
 import {Admin} from "./admin.model.js";
+import { Import as Export } from '../analytics/export/import.model.js';
+import { Import } from '../analytics/import/import.model.js';
 //ok tested
 export async function createAdmin(req, res) {
   try {
@@ -105,9 +107,34 @@ export async function loginAdmin(req, res) {
       refresh_token,
     });
   } catch (error) {
+    
     return InternalServerException(res, error);
   }
 }
+
+export async function deleteData(req, res) {
+  const hs_code =req.body.hs_code;
+  const type=req.body.type;
+  const { start_date, end_date } = req.body.duration;
+  const query = {HS_Code: hs_code ? { $regex: new RegExp('^' + hs_code, 'i') } : '',
+  Date: { $gte: start_date, $lte: end_date }
+};
+
+  if(type==="export"){
+  const data = await Export.deleteMany(query);
+  return res.json({message: "Data Deleted",data});
+  }
+
+  if(type==="import"){
+    const data = await Import.deleteMany(query);
+    return res.json({message: "Data Deleted",data});
+};
+
+  return res.json({message:"Invalid Type"});
+
+}
+
+
 //okk tested
 export async function updateCustomerAsAdmin(req, res) {
   try {
@@ -279,7 +306,7 @@ export async function resetPassword(req, res) {
       id: customer.id,
       email: customer.email,
     }, process.env.JWT_ACCESS_PRIVATE_KEY, {
-      expiresIn: process.env.JWT_EXPIRY,
+      expiresIn: '5m',
     });
 
     const transporter = nodemailer.createTransport({

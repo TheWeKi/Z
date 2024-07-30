@@ -1,6 +1,5 @@
 const errorMiddleware = (error, req, res, next) => {
   try {
-    
     const response = {
       status: false,
       statusCode: error.statusCode || 500,
