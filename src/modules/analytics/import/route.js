@@ -14,8 +14,8 @@ const admin_routes = express.Router();
 admin_routes.post('/upload', upload.single("import_file"), controller.uploadImportData);
 customer_routes.post('/search', isValidBody, isValidToken, isValidHSCode, isDownloadSub, controller.searchImportData);
 
-customer_routes.post('/sort-analysis',authenticate_customer, sortAnalysis);
-customer_routes.post('/detail-analysis',authenticate_customer, detailAnalysis);
-customer_routes.post('/detail-analysis-usd',authenticate_customer, detailAnalysisUSD);
+customer_routes.post('/sort-analysis', isValidBody, authenticate_customer, sortAnalysis);
+customer_routes.post('/detail-analysis', isValidBody, authenticate_customer, detailAnalysis);
+customer_routes.post('/detail-analysis-usd', isValidBody, authenticate_customer, detailAnalysisUSD);
 
 export default {customer_routes, admin_routes};
