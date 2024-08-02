@@ -1,6 +1,6 @@
 import mongoose from 'mongoose';
 
-const importSchema = new mongoose.Schema({
+const exportSchema = new mongoose.Schema({
     Type: { type: String, default: "NA" },
     Shipment_ID: { type: String, default: null },
     Date: { type: Date, default: null },
@@ -36,5 +36,4 @@ const importSchema = new mongoose.Schema({
 
 );
 
-export const Import = mongoose.model('Export', importSchema);
-
+export const Export = mongoose.model('Export', exportSchema);

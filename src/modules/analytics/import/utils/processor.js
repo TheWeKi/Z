@@ -7,7 +7,8 @@ export async function processImportData(filePath) {
   const jsonData = xlsx.utils.sheet_to_json(sheet);
 
   if (!jsonData || !jsonData.length) {
-    return res.status(400).send('No data found in the Excel sheet.');
+    console.log("Error: No data found in the Excel sheet.");
+    return
   }
 
   // Convert data to array of JSON objects

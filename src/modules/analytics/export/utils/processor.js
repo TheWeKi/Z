@@ -1,13 +1,14 @@
 import xlsx from 'xlsx';
 
-export async function processImportData(filePath) {
+export async function processExportData(filePath) {
   const workbook = xlsx.readFile(filePath);
   const sheetName = workbook.SheetNames[0];
   const sheet = workbook.Sheets[sheetName];
   const jsonData = xlsx.utils.sheet_to_json(sheet);
   console.log("I am here")
   if (!jsonData || !jsonData.length) {
-    return res.status(400).send('No data found in the Excel sheet.');
+    console.log("Error: No data found in the Excel sheet.");
+    return
   }
   console.log(jsonData)
   // Convert data to array of JSON objects
@@ -19,7 +20,7 @@ export async function processImportData(filePath) {
 
         let dateStr = row[key]; // e.g., "DD/MM/YYYY" or "DD-MM-YYYY"
 
-        console.log("Date", dateStr);
+        // console.log("Date", dateStr);
 
         // datestr can be in the format "22/03/2022" or "22-03-2022"
         dateStr = dateStr.replace(/-/g, "/"); // replace "-" with "/"

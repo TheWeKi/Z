@@ -10,7 +10,7 @@ async function insertImportData(importData) {
             console.log(`Inserted ${chunk.length} documents`);
             await new Promise(resolve => setTimeout(resolve,1000));
         } catch (error) {
-            console.log(error)
+            console.log(error);
         }
     }
 }

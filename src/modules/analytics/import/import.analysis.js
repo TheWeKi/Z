@@ -9,14 +9,12 @@ async function checkSubscription(id, validated_req) {
 
     if (!customer) return false;
 
-    if (
-        !(customer.hsn_codes &&
-            customer.hsn_codes.length > 0 &&
-            isSubscribedHSCode(customer, validated_req.search_text.hs_code) &&
-            new Date(customer.hsn_codes_valid_upto) >= new Date())
-    ) return false;
-
-    return true;
+    return (
+        customer.hsn_codes &&
+        customer.hsn_codes.length > 0 &&
+        isSubscribedHSCode(customer, validated_req.search_text.hs_code) &&
+        new Date(customer.hsn_codes_valid_upto) >= new Date()
+    )
 }
 
 function isSubscribedHSCode(customer, hs_code) {
@@ -29,7 +27,6 @@ function isSubscribedHSCode(customer, hs_code) {
 }
 
 const sortAnalysis = async (req, res) => {
-
 
     const validated_req = req.validated_req;
 
@@ -64,6 +61,7 @@ const sortAnalysis = async (req, res) => {
                 },
             }
         ]
+
         // const totalShipments = await Import.estimatedDocumentCount(query);
         // const data = await Import.aggregate(pipeline);
 
@@ -71,7 +69,6 @@ const sortAnalysis = async (req, res) => {
             Import.estimatedDocumentCount(query),
             Import.aggregate(pipeline).exec()
         ]);
-
 
         const responseData = {
             Shipments: totalShipments,
@@ -139,7 +136,7 @@ const detailAnalysisUSD = async (req, res) => {
 
     const validated_req = req.validated_req;
 
-    const subscription = await checkSubscription(res, req.user.id, validated_req);
+    const subscription = await checkSubscription(req.user.id, validated_req);
     if (!subscription) return HttpException(res, 400, "Invalid Subscription");
 
     const query = importQuery(validated_req);

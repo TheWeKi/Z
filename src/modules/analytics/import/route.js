@@ -18,4 +18,4 @@ customer_routes.post('/sort-analysis', isValidBody, authenticate_customer, sortA
 customer_routes.post('/detail-analysis', isValidBody, authenticate_customer, detailAnalysis);
 customer_routes.post('/detail-analysis-usd', isValidBody, authenticate_customer, detailAnalysisUSD);
 
-export default {customer_routes, admin_routes};
+export default {customer_routes, admin_routes}

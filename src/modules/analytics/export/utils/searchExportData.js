@@ -4,7 +4,7 @@ function escapeRegExp(string) {
     return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); // $& means the whole matched string
 }
 
-export const fetchImportData = async (validated_req, all) => {
+export const fetchExportData = async (validated_req, all) => {
     const { search_text, pagination, filters, duration } = validated_req;
     const { hs_code, product_name } = search_text;
     const { start_date, end_date } = duration;
