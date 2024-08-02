@@ -18,10 +18,9 @@ import bcrypt from 'bcrypt';
 import { UserType } from '../../enum.js';
 import signToken from '../../utilities/jwt/sign_token.js';
 import refreshToken from '../../utilities/jwt/refresh_token.js';
-import moment from 'moment';
 import nodemailer from 'nodemailer';
 import {Admin} from "./admin.model.js";
-import { Import as Export } from '../analytics/export/import.model.js';
+import { Export } from '../analytics/export/export.model.js';
 import { Import } from '../analytics/import/import.model.js';
 //ok tested
 export async function createAdmin(req, res) {

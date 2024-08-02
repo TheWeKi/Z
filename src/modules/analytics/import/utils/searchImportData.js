@@ -6,6 +6,7 @@ export const fetchImportData = async (validated_req, all) => {
     const skip = (page_index - 1) * page_size;
     const query = importQuery(validated_req)
     const total_records = await Import.countDocuments(query);
+
     let searchResult;
     if(all) {
         searchResult = await Import.find(query).skip(skip).limit(parseInt(page_size)).lean();
