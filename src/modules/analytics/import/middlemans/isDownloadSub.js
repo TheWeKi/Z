@@ -25,7 +25,7 @@ export const isDownloadSub = async (req, res, next) => {
     const skip = (page_index - 1) * page_size;
     const searchResult = await Import.find(query).skip(skip).limit(parseInt(page_size)).lean();
 
-    customer.download_import_sub -= total_records;
+    customer.download_import_sub -= page_size;
     await customer.save();
 
     return HttpResponse(res, 200, 'records fetched successfully', {total_records, searchResult});

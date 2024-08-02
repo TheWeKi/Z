@@ -81,8 +81,14 @@ const sortAnalysis = async (req, res) => {
                     },
                 }
             ]
-        const totalShipments = await Import.countDocuments(query);
-        const data = await Import.aggregate(pipeline);
+        // const totalShipments = await Import.estimatedDocumentCount(query);
+        // const data = await Import.aggregate(pipeline);
+
+        const [totalShipments, data] = await Promise.all([
+            Import.estimatedDocumentCount(query).lean(),
+            Import.aggregate(pipeline).exec()
+        ]);
+            
 
         const responseData = {
             Shipments: totalShipments,
